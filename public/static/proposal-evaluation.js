@@ -75,7 +75,7 @@ class ProposalEvaluationApp {
         customers.forEach(customer => {
           const option = document.createElement('option')
           option.value = customer.id
-          option.textContent = `${customer.name} (${customer.company_name})`
+          option.textContent = `${customer.company_name} ${customer.customer_type || ''}`
           select.appendChild(option)
         })
 

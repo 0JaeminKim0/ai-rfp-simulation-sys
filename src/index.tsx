@@ -576,26 +576,62 @@ app.post('/api/customers/generate', async (c) => {
       customer = {
         customer_id: crypto.randomUUID(),
         customer_type: customerType,
+        name: `${actualCompanyName} ${customerType}`,  // 회사명 + 직책으로 변경
         company_name: actualCompanyName,
         project_name: rfp_analysis_data?.objectives || '프로젝트 분석 결과',
         deep_research_data,
         rfp_analysis_data,
+        
+        // 30개 속성 페르소나 (제안서 평가용)
         integrated_persona: {
-          top3_priorities: [
-            '기술적 안정성과 신뢰성',
-            '비용 효율성과 예산 준수', 
-            '일정 준수와 리스크 관리'
-          ],
-          decision_style: customerType === 'CEO' ? '전략적 비전 중심형' :
-                         customerType === 'CFO' ? '재무 데이터 중심형' :
-                         customerType === 'PM' ? '실행 계획 중심형' : 
-                         '기술 검증 중심형',
-          persona_summary: `${actualCompanyName}의 ${customerType}로서 기술적 전문성과 비즈니스 가치를 균형있게 고려하는 의사결정자입니다. 검증된 솔루션과 명확한 성과 지표를 중시하며, 리스크 최소화와 투자 대비 효과를 핵심 기준으로 평가합니다.`,
-          key_concerns: [
-            '기술적 호환성과 확장성',
-            '예산 초과 및 숨겨진 비용', 
-            '프로젝트 일정 지연 리스크'
-          ],
+          // 기본 정보 (5개)
+          basic_info: {
+            role: customerType,
+            company: actualCompanyName,
+            department: customerType === 'CEO' ? '최고경영진' : customerType === 'CTO' ? '기술담당' : customerType === 'CFO' ? '재무담당' : '프로젝트관리',
+            experience_years: customerType === 'CEO' ? 15 : customerType === 'CTO' ? 12 : 10,
+            decision_authority: customerType === 'CEO' ? '최종결정권자' : '핵심영향자'
+          },
+          
+          // 의사결정 특성 (5개)
+          decision_traits: {
+            style: customerType === 'CEO' ? '전략적 비전 중심형' :
+                   customerType === 'CFO' ? '재무 데이터 중심형' :
+                   customerType === 'PM' ? '실행 계획 중심형' : '기술 검증 중심형',
+            risk_tolerance: customerType === 'CEO' ? '중간' : '보수적',
+            timeline_preference: '단계적 접근',
+            budget_sensitivity: customerType === 'CFO' ? '매우 높음' : '높음',
+            innovation_openness: customerType === 'CTO' ? '높음' : '중간'
+          },
+          
+          // 핵심 우선순위 (5개)
+          priorities: {
+            primary: '기술적 안정성과 신뢰성',
+            secondary: '비용 효율성과 예산 준수',
+            tertiary: '일정 준수와 리스크 관리',
+            compliance: '규제 및 보안 요구사항',
+            scalability: '확장성과 미래 대응'
+          },
+          
+          // 평가 관점 (5개)
+          evaluation_perspective: {
+            technical_depth: customerType === 'CTO' ? '매우 중요' : '중요',
+            business_value: customerType === 'CEO' ? '매우 중요' : '중요',
+            cost_analysis: customerType === 'CFO' ? '매우 중요' : '중요',
+            implementation: customerType === 'PM' ? '매우 중요' : '중요',
+            vendor_reliability: '매우 중요'
+          },
+          
+          // 우려사항 (5개)
+          concerns: {
+            technical_risk: '기술적 호환성과 확장성',
+            financial_risk: '예산 초과 및 숨겨진 비용',
+            timeline_risk: '프로젝트 일정 지연 리스크',
+            operational_risk: '기존 시스템 영향도',
+            vendor_risk: '공급업체 신뢰성과 지원'
+          },
+          
+          // 평가 가중치 (5개)
           evaluation_weights: {
             clarity: customerType === 'CEO' ? 0.20 : 0.15,
             expertise: customerType === 'CTO' ? 0.30 : 0.25,
@@ -603,7 +639,10 @@ app.post('/api/customers/generate', async (c) => {
             logic: 0.20,
             creativity: customerType === 'PM' ? 0.05 : 0.10,
             credibility: customerType === 'CFO' ? 0.15 : 0.10
-          }
+          },
+          
+          // 요약 정보
+          persona_summary: `${actualCompanyName}의 ${customerType}로서 기술적 전문성과 비즈니스 가치를 균형있게 고려하는 의사결정자입니다. 검증된 솔루션과 명확한 성과 지표를 중시하며, 리스크 최소화와 투자 대비 효과를 핵심 기준으로 평가합니다.`
         },
         created_at: new Date().toISOString()
       }
@@ -1443,38 +1482,74 @@ app.post('/api/demo2/generate-customer', async (c) => {
   "created_at": "${new Date().toISOString()}"
 }`
 
-    // 완전한 30속성 통합 폴백 데이터
+    // 30속성 통합 폴백 데이터 (메인 API와 동일한 구조)
     const fallback = {
-      id: `ai-customer-${Date.now()}`,
-      name: `${company_name}_CTO_${Date.now().toString().slice(-4)}`,
+      customer_id: crypto.randomUUID(),
+      customer_type: 'CTO',
+      name: `${company_name} CTO`,  // 회사명 + 직책
       company_name: company_name || '테스트기업',
-      department: "경영진",
-      version: "v2.0",
-      status: "active",
-      persona_summary: `${company_name}의 혁신추진 리더`,
-      decision_making_style: "데이터 기반 신중한 판단",
-      top3_priorities: ['기술 혁신', '운영 효율성', '리스크 관리'],
-      combined_attributes: {
-        strategic_focus: "기술혁신 우선",
-        risk_appetite: "위험중립형", 
-        innovation_preference: "검증기술 선호",
-        budget_sensitivity: "투자적극형",
-        technology_adoption: "기술실용형",
-        quality_standards: "최고품질 추구", 
-        timeline_priority: "적절한 속도",
-        compliance_requirements: "높은 규제준수",
-        stakeholder_priorities: "균형적 접근",
-        partnership_approach: "전략적 협력"
+      project_name: 'ERP-MES-ESG 통합 DX 플랫폼',
+      
+      // 30개 속성 페르소나 구조 (메인과 동일)
+      integrated_persona: {
+        // 기본 정보 (5개)
+        basic_info: {
+          role: 'CTO',
+          company: company_name || '테스트기업',
+          department: '기술담당',
+          experience_years: 12,
+          decision_authority: '핵심영향자'
+        },
+        
+        // 의사결정 특성 (5개)
+        decision_traits: {
+          style: '기술 검증 중심형',
+          risk_tolerance: '보수적',
+          timeline_preference: '단계적 접근',
+          budget_sensitivity: '높음',
+          innovation_openness: '높음'
+        },
+        
+        // 핵심 우선순위 (5개)
+        priorities: {
+          primary: '기술적 안정성과 신뢰성',
+          secondary: '확장성과 미래 대응',
+          tertiary: '비용 효율성과 예산 준수',
+          compliance: '규제 및 보안 요구사항',
+          scalability: '시스템 통합과 호환성'
+        },
+        
+        // 평가 관점 (5개)
+        evaluation_perspective: {
+          technical_depth: '매우 중요',
+          business_value: '중요',
+          cost_analysis: '중요',
+          implementation: '중요',
+          vendor_reliability: '매우 중요'
+        },
+        
+        // 우려사항 (5개)
+        concerns: {
+          technical_risk: '기술적 호환성과 확장성',
+          financial_risk: '예산 초과 및 숨겨진 비용',
+          timeline_risk: '프로젝트 일정 지연 리스크',
+          operational_risk: '기존 시스템 영향도',
+          vendor_risk: '공급업체 신뢰성과 지원'
+        },
+        
+        // 평가 가중치 (5개)
+        evaluation_weights: {
+          clarity: 0.15,
+          expertise: 0.30,  // CTO는 기술 전문성에 높은 비중
+          persuasiveness: 0.20,
+          logic: 0.20,
+          creativity: 0.05,
+          credibility: 0.10
+        },
+        
+        // 요약 정보
+        persona_summary: `${company_name || '테스트기업'}의 CTO로서 기술적 전문성과 비즈니스 가치를 균형있게 고려하는 의사결정자입니다. 검증된 솔루션과 명확한 성과 지표를 중시하며, 리스크 최소화와 투자 대비 효과를 핵심 기준으로 평가합니다.`
       },
-      evaluation_weights: {
-        clarity: 0.15,
-        expertise: 0.25,
-        persuasiveness: 0.20, 
-        logic: 0.20,
-        creativity: 0.10,
-        credibility: 0.10
-      },
-      key_concerns: ['기술적 위험도', '예산 효율성', '일정 준수'],
       deep_research_data,
       rfp_analysis_data,
       created_at: new Date().toISOString()
