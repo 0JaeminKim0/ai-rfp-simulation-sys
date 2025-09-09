@@ -764,7 +764,7 @@ class CustomerGenerationApp {
         this.updateProgressBar()
         this.checkGenerationReady()
         
-        this.showSuccessMessage(`🎉 ${companyName} AI 딥리서치 완료! 실제 GPT-4o가 5가지 핵심 속성을 분석했습니다.`)
+        this.showSuccessMessage(`🎉 ${companyName} AI 딥리서치 완료! 실제 GPT-4o가 15가지 핵심 속성을 분석했습니다.`)
       } else {
         throw new Error(response.data.error || 'AI 딥리서치 실패')
       }

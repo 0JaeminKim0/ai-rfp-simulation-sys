@@ -1213,16 +1213,26 @@ app.post('/api/demo2/deep-research', async (c) => {
 
     console.log(`🚀 데모2 딥리서치 시작: ${company_name} (LLM 15초 제한)`)
     
-    // 초간단 프롬프트로 5개 핵심 속성만 생성
-    const prompt = `${company_name}의 핵심 정보 5개를 각 15자 이내로 간단히 분석해주세요:
+    // 15개 핵심 속성 생성
+    const prompt = `${company_name}의 핵심 정보 15개를 각 20자 이내로 간단히 분석해주세요:
 
 JSON 응답:
 {
-  "1": {"id":"1","name":"비전·미션","content":"15자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
-  "2": {"id":"2","name":"핵심 사업영역","content":"15자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},  
-  "3": {"id":"3","name":"시장 포지셔닝","content":"15자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
-  "4": {"id":"4","name":"재무 전략","content":"15자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
-  "5": {"id":"5","name":"R&D 지향성","content":"15자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"}
+  "1": {"id":"1","name":"비전·미션","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "2": {"id":"2","name":"핵심 사업영역","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},  
+  "3": {"id":"3","name":"시장 포지셔닝","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "4": {"id":"4","name":"재무 전략","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "5": {"id":"5","name":"R&D 지향성","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "6": {"id":"6","name":"경쟁 우위","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "7": {"id":"7","name":"수익 모델","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "8": {"id":"8","name":"주요 제품","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "9": {"id":"9","name":"타겟 시장","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "10": {"id":"10","name":"파트너십","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "11": {"id":"11","name":"최근 동향","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "12": {"id":"12","name":"재무 현황","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "13": {"id":"13","name":"도전 과제","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "14": {"id":"14","name":"기회 요인","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"},
+  "15": {"id":"15","name":"미래 전망","content":"20자 이내 내용","source_url":"llm","source_type":"llm","reliability_score":8,"llm_confidence":0.9,"extracted_at":"${new Date().toISOString()}"}
 }`
 
     const fallback = {
@@ -1230,7 +1240,17 @@ JSON 응답:
       2: { id: "2", name: "핵심 사업영역", content: `${company_name}의 주력 사업`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
       3: { id: "3", name: "시장 포지셔닝", content: `${company_name}의 시장 지위`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
       4: { id: "4", name: "재무 전략", content: `${company_name}의 안정 운영`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
-      5: { id: "5", name: "R&D 지향성", content: `${company_name}의 기술 혁신`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() }
+      5: { id: "5", name: "R&D 지향성", content: `${company_name}의 기술 혁신`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      6: { id: "6", name: "경쟁 우위", content: `${company_name}의 차별화 전략`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      7: { id: "7", name: "수익 모델", content: `${company_name}의 수익 구조`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      8: { id: "8", name: "주요 제품", content: `${company_name}의 핵심 상품`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      9: { id: "9", name: "타겟 시장", content: `${company_name}의 목표 고객`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      10: { id: "10", name: "파트너십", content: `${company_name}의 협력 관계`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      11: { id: "11", name: "최근 동향", content: `${company_name}의 현재 상황`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      12: { id: "12", name: "재무 현황", content: `${company_name}의 경영 성과`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      13: { id: "13", name: "도전 과제", content: `${company_name}의 해결 과제`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      14: { id: "14", name: "기회 요인", content: `${company_name}의 성장 기회`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() },
+      15: { id: "15", name: "미래 전망", content: `${company_name}의 발전 방향`, source_url: "fallback", source_type: "fallback", reliability_score: 7, llm_confidence: 0.8, extracted_at: new Date().toISOString() }
     }
 
     // 15초 타임아웃으로 실제 LLM 호출
@@ -1242,7 +1262,7 @@ JSON 응답:
           model: "gpt-4o",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.3,
-          max_tokens: 600,
+          max_tokens: 1200,
           response_format: { type: "json_object" }
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('15초 타임아웃')), 15000))
@@ -1260,7 +1280,7 @@ JSON 응답:
     return c.json({
       success: true,
       data: result,
-      message: `데모2: ${company_name} 실제 LLM 딥리서치 완료 (5개 핵심 속성)`
+      message: `데모2: ${company_name} 실제 LLM 딥리서치 완료 (15개 핵심 속성)`
     })
   } catch (error) {
     return c.json({
