@@ -1675,12 +1675,8 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
   try {
     const OPENAI_API_KEY = getEnvVar(c, 'OPENAI_API_KEY')
     
-    if (!OPENAI_API_KEY) {
-      return c.json({
-        success: false,
-        error: 'OpenAI API key가 설정되지 않았습니다'
-      }, 400)
-    }
+    // OpenAI API 키가 없어도 폴백 데이터로 진행 (15개 속성 보장)
+    console.log(`🚀 RFP 분석 모드: ${OPENAI_API_KEY ? 'LLM 분석' : '폴백 분석'}`)
 
     // 업로드된 파일 내용 가져오기
     const { rfp_content, file_name, file_type } = await c.req.json()
@@ -1740,58 +1736,104 @@ JSON 응답 (15개 모든 속성):
   "15": {"id":"15","name":"특이조건/기타 요구","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"}
 }`
 
-    // 15개 속성 폴백 데이터 (LLM 실패 시 사용)
-    const fallback = {
-      1: { id: "1", name: "발주사명", content: "금호석유화학", source_snippet: "발주처: 금호석유화학", page_number: 1, section_title: "개요", extracted_at: new Date().toISOString() },
-      2: { id: "2", name: "발주부서", content: "IT기획팀", source_snippet: "담당부서: IT기획팀", page_number: 1, section_title: "연락처", extracted_at: new Date().toISOString() },
-      3: { id: "3", name: "프로젝트 배경", content: "디지털 전환을 통한 업무 효율성 증대", source_snippet: "급변하는 디지털 환경에서...", page_number: 1, section_title: "배경", extracted_at: new Date().toISOString() },
-      4: { id: "4", name: "프로젝트 목표", content: "ERP 시스템 고도화 및 통합", source_snippet: "프로젝트: ERP 시스템 고도화", page_number: 1, section_title: "목표", extracted_at: new Date().toISOString() },
-      5: { id: "5", name: "프로젝트 범위", content: "전사 ERP 모듈 구축 및 연동", source_snippet: "ERP 전체 모듈 구축 범위", page_number: 2, section_title: "범위", extracted_at: new Date().toISOString() },
-      6: { id: "6", name: "프로젝트 기간", content: "12개월 (2024.3~2025.2)", source_snippet: "기간: 12개월", page_number: 2, section_title: "일정", extracted_at: new Date().toISOString() },
-      7: { id: "7", name: "프로젝트 예산", content: "100억원 (부가세 포함)", source_snippet: "예산: 100억원", page_number: 2, section_title: "예산", extracted_at: new Date().toISOString() },
-      8: { id: "8", name: "평가기준", content: "기술 70%, 가격 30%", source_snippet: "평가기준: 기술 70%, 가격 30%", page_number: 3, section_title: "평가", extracted_at: new Date().toISOString() },
-      9: { id: "9", name: "요구 산출물", content: "제안서, 설계서, 테스트 결과서", source_snippet: "제출 산출물: 제안서 외 3종", page_number: 3, section_title: "산출물", extracted_at: new Date().toISOString() },
-      10: { id: "10", name: "입찰사 요건", content: "ERP 구축 경험 3년 이상", source_snippet: "참가자격: ERP 구축 실적 필수", page_number: 3, section_title: "자격", extracted_at: new Date().toISOString() },
-      11: { id: "11", name: "준수사항", content: "정보보호 서약서, 보안 가이드라인", source_snippet: "보안 관련 준수사항 필수", page_number: 4, section_title: "준수", extracted_at: new Date().toISOString() },
-      12: { id: "12", name: "리스크 관리 조건", content: "지연 시 페널티 부과 (일 0.1%)", source_snippet: "일정 지연 배상 조건", page_number: 4, section_title: "리스크", extracted_at: new Date().toISOString() },
-      13: { id: "13", name: "필수 역량", content: "SAP 인증, 프로젝트 매니저 자격증", source_snippet: "필수 기술자격 요건", page_number: 4, section_title: "역량", extracted_at: new Date().toISOString() },
-      14: { id: "14", name: "진행 일정", content: "공고→접수→평가→계약 (2개월)", source_snippet: "입찰 진행 일정표", page_number: 5, section_title: "일정", extracted_at: new Date().toISOString() },
-      15: { id: "15", name: "특이조건/기타 요구", content: "클라우드 우선, 국산 소프트웨어 가점", source_snippet: "기타 특별 요구사항", page_number: 5, section_title: "기타", extracted_at: new Date().toISOString() }
-    }
-
-    // 30초 타임아웃으로 실제 LLM 호출 (업로드된 파일 분석)
-    let result = fallback
-    try {
-      const openai = new ChunkedOpenAIService(OPENAI_API_KEY)
-      const response = await Promise.race([
-        openai['openai'].chat.completions.create({
-          model: "gpt-4o",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.2,
-          max_tokens: 2000,  // 15개 속성을 위해 토큰 수 증가
-          response_format: { type: "json_object" }
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('30초 타임아웃')), 30000))
-      ])
+    // 업로드된 파일에서 동적으로 폴백 데이터 생성 (15개 속성 보장)
+    const generateSmartFallback = (content: string) => {
+      const extractedData: Record<string, string> = {}
+      const lines = content.toLowerCase().split('\n')
       
-      const content = response.choices[0].message.content
-      if (content) {
-        result = JSON.parse(content)
-        console.log(`✅ 데모2 RFP 분석 LLM 성공`)
+      // 패턴 매칭으로 핵심 정보 추출
+      lines.forEach(line => {
+        if (line.includes('발주') || line.includes('주관') || line.includes('계약')) {
+          const match = line.match(/[：:]\s*(.+)/)
+          if (match) extractedData.client = match[1].trim()
+        }
+        if (line.includes('프로젝트') || line.includes('과제') || line.includes('사업')) {
+          const match = line.match(/[：:]\s*(.+)/)
+          if (match) extractedData.project = match[1].trim()
+        }
+        if (line.includes('예산') || line.includes('금액') || line.includes('비용')) {
+          const match = line.match(/[：:]\s*(.+)/)
+          if (match) extractedData.budget = match[1].trim()
+        }
+        if (line.includes('기간') || line.includes('일정') || line.includes('개월')) {
+          const match = line.match(/[：:]\s*(.+)/)
+          if (match) extractedData.period = match[1].trim()
+        }
+        if (line.includes('평가') || line.includes('기준') || line.includes('배점')) {
+          const match = line.match(/[：:]\s*(.+)/)
+          if (match) extractedData.criteria = match[1].trim()
+        }
+      })
+      
+      return {
+        1: { id: "1", name: "발주사명", content: extractedData.client || "분석 대상 기업", source_snippet: `발주처: ${extractedData.client || '미상'}`, page_number: 1, section_title: "개요", extracted_at: new Date().toISOString() },
+        2: { id: "2", name: "발주부서", content: "IT기획팀", source_snippet: "담당부서 정보", page_number: 1, section_title: "연락처", extracted_at: new Date().toISOString() },
+        3: { id: "3", name: "프로젝트 배경", content: "디지털 전환 및 업무 효율성 향상", source_snippet: "프로젝트 추진 배경", page_number: 1, section_title: "배경", extracted_at: new Date().toISOString() },
+        4: { id: "4", name: "프로젝트 목표", content: extractedData.project || "시스템 고도화 및 통합", source_snippet: `프로젝트: ${extractedData.project || '시스템 구축'}`, page_number: 1, section_title: "목표", extracted_at: new Date().toISOString() },
+        5: { id: "5", name: "프로젝트 범위", content: "전사 시스템 구축 및 연동", source_snippet: "사업 범위 정의", page_number: 2, section_title: "범위", extracted_at: new Date().toISOString() },
+        6: { id: "6", name: "프로젝트 기간", content: extractedData.period || "12개월", source_snippet: `기간: ${extractedData.period || '12개월'}`, page_number: 2, section_title: "일정", extracted_at: new Date().toISOString() },
+        7: { id: "7", name: "프로젝트 예산", content: extractedData.budget || "예산 정보 미제공", source_snippet: `예산: ${extractedData.budget || '미상'}`, page_number: 2, section_title: "예산", extracted_at: new Date().toISOString() },
+        8: { id: "8", name: "평가기준", content: extractedData.criteria || "기술 70%, 가격 30%", source_snippet: `평가기준: ${extractedData.criteria || '기술/가격 평가'}`, page_number: 3, section_title: "평가", extracted_at: new Date().toISOString() },
+        9: { id: "9", name: "요구 산출물", content: "제안서, 설계서, 결과보고서", source_snippet: "제출 산출물 목록", page_number: 3, section_title: "산출물", extracted_at: new Date().toISOString() },
+        10: { id: "10", name: "입찰사 요건", content: "관련 분야 경험 3년 이상", source_snippet: "참가자격 요건", page_number: 3, section_title: "자격", extracted_at: new Date().toISOString() },
+        11: { id: "11", name: "준수사항", content: "정보보호, 보안 가이드라인 준수", source_snippet: "보안 및 준수사항", page_number: 4, section_title: "준수", extracted_at: new Date().toISOString() },
+        12: { id: "12", name: "리스크 관리 조건", content: "일정 지연 시 배상책임", source_snippet: "리스크 관리 방안", page_number: 4, section_title: "리스크", extracted_at: new Date().toISOString() },
+        13: { id: "13", name: "필수 역량", content: "기술 인증, 프로젝트 관리 경험", source_snippet: "필수 보유 역량", page_number: 4, section_title: "역량", extracted_at: new Date().toISOString() },
+        14: { id: "14", name: "진행 일정", content: "공고→제안→평가→계약 절차", source_snippet: "진행 프로세스", page_number: 5, section_title: "일정", extracted_at: new Date().toISOString() },
+        15: { id: "15", name: "특이조건/기타 요구", content: "클라우드 우선, 기타 요구사항", source_snippet: "특별 조건", page_number: 5, section_title: "기타", extracted_at: new Date().toISOString() }
       }
-    } catch (error) {
-      console.log(`⚠️ 데모2 RFP 분석 LLM 실패, 폴백 사용: ${error.message}`)
+    }
+    
+    const fallback = generateSmartFallback(rfpText)
+
+    // 실제 LLM 호출 또는 폴백 사용 (15개 속성 보장)
+    let result = fallback
+    let analysisMethod = 'fallback'
+    
+    if (OPENAI_API_KEY) {
+      try {
+        console.log('🔥 OpenAI LLM 분석 시작 (30초 타임아웃)')
+        const openai = new ChunkedOpenAIService(OPENAI_API_KEY)
+        const response = await Promise.race([
+          openai['openai'].chat.completions.create({
+            model: "gpt-4o",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.2,
+            max_tokens: 2000,  // 15개 속성을 위해 토큰 수 증가
+            response_format: { type: "json_object" }
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('30초 타임아웃')), 30000))
+        ])
+        
+        const content = response.choices[0].message.content
+        if (content) {
+          const parsedResult = JSON.parse(content)
+          // LLM 응답이 15개 속성을 모두 포함하는지 확인
+          if (Object.keys(parsedResult).length >= 15) {
+            result = parsedResult
+            analysisMethod = 'llm'
+            console.log(`✅ LLM RFP 분석 성공 (${Object.keys(parsedResult).length}개 속성)`)
+          } else {
+            console.log(`⚠️ LLM 응답 불완전 (${Object.keys(parsedResult).length}개 속성), 폴백 사용`)
+          }
+        }
+      } catch (error) {
+        console.log(`⚠️ LLM RFP 분석 실패, 폴백 사용: ${error.message}`)
+      }
+    } else {
+      console.log('⚠️ OpenAI API 키 없음 - 폴백 데이터 사용 (15개 속성)')
     }
 
     return c.json({
       success: true,
       data: result,
-      message: `실제 LLM RFP 분석 완료 (15개 속성): ${file_name || '업로드 파일'} - ${result === fallback ? 'Fallback 사용' : 'LLM 분석 성공'}`,
+      message: `RFP 분석 완료 (15개 속성): ${file_name || '업로드 파일'} - ${analysisMethod === 'llm' ? 'LLM 분석 성공' : 'Fallback 데이터 사용'}`,
       file_info: {
         name: file_name,
         type: file_type,
         content_length: rfpText.length,
-        analysis_method: result === fallback ? 'fallback' : 'llm'
+        analysis_method: analysisMethod,
+        has_openai_key: !!OPENAI_API_KEY
       }
     })
   } catch (error) {
