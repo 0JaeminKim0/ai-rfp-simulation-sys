@@ -368,13 +368,17 @@ RFP 문서 분석을 위한 기본 정보:
     const demoGenerateBtn = document.getElementById('demo-generate-customer')
     const demo2GenerateBtn = document.getElementById('demo2-generate-customer')
     
-    if (this.deepResearchData && this.rfpAnalysisData) {
-      // 첫 번째 버튼 처리
+    const hasData = this.deepResearchData && this.rfpAnalysisData
+    const stepText = !this.deepResearchData ? '1️⃣ 딥리서치 시작' : !this.rfpAnalysisData ? '2️⃣ RFP 분석' : '✅ 준비완료'
+    
+    if (hasData) {
+      // 데이터가 있을 때: 버튼 활성화
       if (demoGenerateBtn) {
         demoGenerateBtn.removeAttribute('disabled')
         demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy)'
         demoGenerateBtn.style.cursor = 'pointer'
         demoGenerateBtn.style.opacity = '1'
+        demoGenerateBtn.title = '실제 딥리서치와 RFP 데이터로 AI 가상고객 생성'
         
         // 호버 효과
         demoGenerateBtn.onmouseenter = () => {
@@ -385,11 +389,12 @@ RFP 문서 분석을 위한 기본 정보:
         }
       }
       
-      // 두 번째 버튼 처리
+      // "AI 고객 생성" 버튼 (demo2) - 실제 딥리서치 사용
       if (demo2GenerateBtn) {
         demo2GenerateBtn.removeAttribute('disabled')
         demo2GenerateBtn.style.cursor = 'pointer'
         demo2GenerateBtn.style.opacity = '1'
+        demo2GenerateBtn.title = `실제 딥리서치(${Object.keys(this.deepResearchData).length}개 속성) + RFP 분석(${Object.keys(this.rfpAnalysisData).length}개 속성) → AI 가상고객 생성`
         
         // 원래 스타일을 유지하면서 호버 효과 추가
         demo2GenerateBtn.onmouseenter = () => {
@@ -401,22 +406,51 @@ RFP 문서 분석을 위한 기본 정보:
           demo2GenerateBtn.style.boxShadow = '0 4px 12px rgba(0, 51, 102, 0.3)'
         }
       }
+    } else {
+      // 데이터가 없을 때: 버튼 비활성화
+      if (demo2GenerateBtn) {
+        demo2GenerateBtn.setAttribute('disabled', 'true')
+        demo2GenerateBtn.style.cursor = 'not-allowed'
+        demo2GenerateBtn.style.opacity = '0.6'
+        demo2GenerateBtn.title = `${stepText} 필요 - 순서: 회사명 입력 → 딥리서치 시작 → RFP 분석 → AI 고객 생성`
+        
+        // 호버 효과 제거
+        demo2GenerateBtn.onmouseenter = null
+        demo2GenerateBtn.onmouseleave = null
+      }
+      
+      // 데모 버튼은 항상 사용 가능 (기존 동작 유지)
+      if (demoGenerateBtn) {
+        demoGenerateBtn.removeAttribute('disabled')
+        demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy)'
+        demoGenerateBtn.style.cursor = 'pointer'
+        demoGenerateBtn.style.opacity = '1'
+        demoGenerateBtn.title = '데모 데이터로 즉시 AI 가상고객 생성'
+        
+        demoGenerateBtn.onmouseenter = () => {
+          demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy-light)'
+        }
+        demoGenerateBtn.onmouseleave = () => {
+          demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy)'
+        }
+      }
     }
   }
 
   async generateCustomer() {
     const companyName = document.getElementById('company-name')?.value || '샘플기업'
     
-    // 데모용: 딥리서치와 RFP 데이터가 없으면 기본값 사용
+    // 실제 딥리서치와 RFP 분석 데이터 필수 확인
+    if (!this.deepResearchData || !this.rfpAnalysisData) {
+      alert('먼저 딥리서치 시작 (AI 분석)과 RFP 분석을 완료해주세요.\n\n1️⃣ 회사명을 입력하고 "딥리서치 시작 (AI 분석)" 버튼 클릭\n2️⃣ RFP 문서 업로드 후 "RFP AI 분석" 버튼 클릭\n3️⃣ 두 단계 완료 후 "AI 고객 생성" 버튼 클릭')
+      return
+    }
+    
+    console.log('🔍 실제 딥리서치 데이터 사용:', Object.keys(this.deepResearchData).length, '개 속성')
+    console.log('🔍 실제 RFP 분석 데이터 사용:', Object.keys(this.rfpAnalysisData).length, '개 속성')
+    
     let deepResearchData = this.deepResearchData
     let rfpAnalysisData = this.rfpAnalysisData
-    
-    if (!deepResearchData || !rfpAnalysisData) {
-      console.log('딥리서치/RFP 데이터가 없어서 데모 데이터를 사용합니다.')
-      // 기본 데모 데이터 생성
-      deepResearchData = { "1": { "name": "기본 비전미션", "content": "혁신과 성장 추구" } }
-      rfpAnalysisData = { "1": { "name": "기본 발주사", "content": companyName } }
-    }
 
     try {
       this.showLoading('AI 가상고객 생성 중...')
