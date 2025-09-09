@@ -1,6 +1,9 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
+// Railway 환경용 전역 메모리 저장소
+const globalMemoryStore = new Map<string, any>()
+
 // 유틸리티 및 서비스 임포트
 import { DeepResearchService } from './services/deep-research'
 import { RfpAnalysisService } from './services/rfp-analysis'
@@ -192,18 +195,28 @@ app.post('/api/test-deep-research', async (c) => {
 // 1. AI 가상고객 생성 API
 app.get('/api/customers', async (c) => {
   try {
-    const storage = new JsonStorageService(c.env.KV)
-    const customers = await storage.getAllVirtualCustomers()
+    // Railway 환경에서는 전역 메모리 저장소 우선 사용
+    const customers: any[] = []
     
-    // 실제 저장된 고객 데이터만 반환 (빈 배열이어도 OK)
+    // 전역 메모리에서 고객 데이터 수집
+    for (const [key, value] of globalMemoryStore.entries()) {
+      if (key.startsWith('customer:')) {
+        customers.push(value)
+      }
+    }
+    
+    // 생성일 기준 내림차순 정렬
+    customers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    
+    console.log(`📋 고객 목록 조회: ${customers.length}개 고객 발견`)
+    
     return c.json({
       success: true,
       data: customers
     })
   } catch (error) {
-    console.error('고객 목록 조회 오류:', error)
+    console.error('❌ 고객 목록 조회 오류:', error)
     
-    // 에러 시에도 빈 배열 반환
     return c.json({
       success: true,
       data: []
@@ -1194,30 +1207,45 @@ app.post('/api/demo/generate-customer', async (c) => {
     
     const customerWithId = { ...demoCustomer, id: customerId }
     
-    // KV Storage에 저장 (D1 대신)
-    if (c.env.KV) {
-      try {
-        const storage = new JsonStorageService(c.env.KV)
-        
-        // 동일한 회사명의 기존 고객이 있다면 교체, 없다면 추가
-        const existingCustomers = await storage.getAllVirtualCustomers()
-        const sameCompanyCustomer = existingCustomers.find(customer => 
-          customer.company_name === companyName && customer.id.startsWith('demo-customer-')
-        )
-        
-        if (sameCompanyCustomer) {
-          console.log(`기존 고객 교체: ${sameCompanyCustomer.id} → ${customerId}`)
-          // 기존 고객 삭제
-          await c.env.KV.delete(`customer:${sameCompanyCustomer.id}`)
+    // Railway 환경용 전역 메모리 저장소에 저장
+    try {
+      // 동일한 회사명의 기존 고객이 있다면 교체
+      let replacedCustomerId = null
+      for (const [key, value] of globalMemoryStore.entries()) {
+        if (key.startsWith('customer:') && 
+            value.company_name === companyName && 
+            value.id.startsWith('demo-customer-')) {
+          replacedCustomerId = value.id
+          globalMemoryStore.delete(key)  // 기존 고객 삭제
+          console.log(`🔄 기존 고객 교체: ${value.id} → ${customerId} (회사명: ${companyName})`)
+          break
         }
-        
-        // 새로운 고객 저장
-        await storage.saveVirtualCustomer(customerWithId)
-        console.log(`새 고객 저장 완료: ${customerId} (회사명: ${companyName})`)
-        
-      } catch (kvError) {
-        console.log('KV 저장 실패, 메모리만 사용:', kvError.message)
       }
+      
+      // 새로운 고객 저장
+      const customerKey = `customer:${customerId}`
+      globalMemoryStore.set(customerKey, customerWithId)
+      
+      if (replacedCustomerId) {
+        console.log(`✅ 고객 교체 완료: ${customerId} (회사명: ${companyName})`)
+      } else {
+        console.log(`✅ 새 고객 저장 완료: ${customerId} (회사명: ${companyName})`)
+      }
+      
+      // KV Storage도 시도 (Cloudflare 환경용)
+      if (c.env.KV) {
+        try {
+          const storage = new JsonStorageService(c.env.KV)
+          await storage.saveVirtualCustomer(customerWithId)
+          console.log(`☁️ KV Storage 저장도 성공: ${customerId}`)
+        } catch (kvError) {
+          console.log('⚠️ KV 저장 실패 (메모리만 사용):', kvError.message)
+        }
+      }
+      
+    } catch (storageError) {
+      console.log('❌ 저장소 오류:', storageError.message)
+      throw storageError
     }
     
     return c.json({
