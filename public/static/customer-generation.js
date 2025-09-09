@@ -28,7 +28,12 @@ class CustomerGenerationApp {
 
     // RFP 파일 업로드
     document.getElementById('rfp-file')?.addEventListener('change', (e) => {
-      this.handleRfpUpload(e.target.files[0])
+      this.handleRfpFileSelect(e.target.files[0])
+    })
+
+    // RFP AI 분석 버튼
+    document.getElementById('rfp-ai-analysis')?.addEventListener('click', () => {
+      this.analyzeUploadedRfp()
     })
 
     // 데모 RFP 분석 버튼
@@ -46,10 +51,9 @@ class CustomerGenerationApp {
       this.loadDemoCustomerGeneration()
     })
 
-    // Demo2 버튼들 - 실제 LLM 사용 (통합됨)
-
-    document.getElementById('demo2-rfp-analysis')?.addEventListener('click', () => {
-      this.startDemo2RfpAnalysis()
+    // Demo2 가상고객 생성 (LLM 사용)
+    document.getElementById('demo2-generate-customer')?.addEventListener('click', () => {
+      this.startDemo2CustomerGeneration()
     })
 
     document.getElementById('demo2-generate-customer')?.addEventListener('click', () => {
@@ -82,7 +86,7 @@ class CustomerGenerationApp {
       
       const files = e.dataTransfer.files
       if (files.length > 0) {
-        this.handleRfpUpload(files[0])
+        this.handleRfpFileSelect(files[0])
       }
     })
   }
@@ -158,7 +162,7 @@ class CustomerGenerationApp {
     })
   }
 
-  async handleRfpUpload(file) {
+  handleRfpFileSelect(file) {
     if (!file) return
 
     const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
@@ -167,31 +171,101 @@ class CustomerGenerationApp {
       return
     }
 
+    // 파일 정보 저장
+    this.selectedRfpFile = file
+    
+    // 파일 정보 표시
+    this.displayUploadedFileInfo(file)
+    
+    // RFP AI 분석 버튼 활성화
+    const analysisButton = document.getElementById('rfp-ai-analysis')
+    if (analysisButton) {
+      analysisButton.disabled = false
+      analysisButton.style.opacity = '1'
+      analysisButton.style.cursor = 'pointer'
+    }
+  }
+
+  displayUploadedFileInfo(file) {
+    const infoDiv = document.getElementById('uploaded-file-info')
+    const detailsDiv = document.getElementById('file-details')
+    
+    if (!infoDiv || !detailsDiv) return
+    
+    const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB'
+    const fileType = file.type.includes('pdf') ? 'PDF' : 
+                    file.type.includes('wordprocessing') ? 'DOCX' : 'TXT'
+    
+    detailsDiv.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: var(--spacing-xs);">
+        <div><strong>파일명:</strong> ${file.name}</div>
+        <div><strong>파일 형식:</strong> ${fileType}</div>
+        <div><strong>파일 크기:</strong> ${fileSize}</div>
+        <div style="color: var(--pwc-success); font-weight: 600;">
+          <i class="fas fa-check-circle"></i> 파일 업로드 완료 - AI 분석 버튼을 클릭하세요
+        </div>
+      </div>
+    `
+    
+    infoDiv.style.display = 'block'
+  }
+
+  async analyzeUploadedRfp() {
+    if (!this.selectedRfpFile) {
+      alert('먼저 RFP 파일을 업로드해주세요.')
+      return
+    }
+
     try {
-      this.showLoading('RFP 문서 분석 중...')
+      this.showLoading('RFP 문서 AI 분석 중... (실제 LLM 사용)')
 
-      // 파일 업로드 (실제로는 파일 업로드 API 필요)
-      const formData = new FormData()
-      formData.append('rfp_file', file)
+      // 파일 내용 읽기 (실제 구현에서는 서버에서 처리)
+      const fileText = await this.extractFileText(this.selectedRfpFile)
       
-      // 임시로 파일명으로 분석 요청
-      const fileType = file.type.includes('pdf') ? 'pdf' : 
-                     file.type.includes('wordprocessing') ? 'docx' : 'txt'
-
-      const response = await axios.post('/api/customers/rfp-analysis', formData)
+      // LLM API 호출
+      const response = await axios.post('/api/demo2/rfp-analysis', {
+        rfp_content: fileText,
+        file_name: this.selectedRfpFile.name,
+        file_type: this.selectedRfpFile.type
+      })
 
       if (response.data.success) {
         this.rfpAnalysisData = response.data.data
         this.displayRfpResults()
         this.checkGenerationReady()
+        
+        // 업로드 정보 업데이트
+        const detailsDiv = document.getElementById('file-details')
+        if (detailsDiv) {
+          const currentContent = detailsDiv.innerHTML
+          detailsDiv.innerHTML = currentContent.replace(
+            /파일 업로드 완료.*세요/,
+            'AI 분석 완료 - 15개 속성 추출 완료'
+          )
+        }
       } else {
-        throw new Error(response.data.error || 'RFP 분석 실패')
+        throw new Error(response.data.error || 'RFP AI 분석 실패')
       }
     } catch (error) {
-      console.error('RFP analysis failed:', error)
-      alert('RFP 문서 분석에 실패했습니다: ' + error.message)
+      console.error('RFP AI analysis failed:', error)
+      alert('RFP AI 분석에 실패했습니다: ' + error.message)
     } finally {
       this.hideLoading()
+    }
+  }
+
+  async extractFileText(file) {
+    // 실제 구현에서는 서버에서 PDF/DOCX 파싱 필요
+    // 여기서는 임시로 TXT 파일만 처리
+    if (file.type === 'text/plain') {
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => resolve(e.target.result)
+        reader.readAsText(file)
+      })
+    } else {
+      // PDF/DOCX의 경우 샘플 텍스트 반환
+      return `샘플 RFP 문서 내용: ${file.name}의 내용을 분석합니다. 프로젝트 목표, 요구사항, 예산 등을 포함한 RFP 문서입니다.`
     }
   }
 

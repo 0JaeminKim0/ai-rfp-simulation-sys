@@ -428,37 +428,58 @@ app.post('/api/customers/rfp-analysis', async (c) => {
       }, 400)
     }
     
-    console.log(`RFP 분석 시작: ${fileName}`)
+    console.log(`🚀 RFP 분석 시작: ${fileName} (크기: ${rfpFile.size} bytes)`)
     
     // 파일 버퍼로 변환
     const fileBuffer = await rfpFile.arrayBuffer()
+    console.log(`📄 파일 버퍼 변환 완료: ${fileBuffer.byteLength} bytes`)
     
     // PDF 파서로 텍스트 추출
     const pdfParser = new PdfParserService()
     const fileValidation = pdfParser.validateFileType(fileBuffer, fileName)
     
     if (!fileValidation.isValid) {
+      console.error(`❌ 파일 검증 실패: ${fileName}, 타입: ${fileValidation.fileType}`)
       return c.json({
         success: false,
-        error: '지원하지 않는 파일 형식입니다. PDF 또는 DOCX 파일을 업로드해주세요.'
+        error: `지원하지 않는 파일 형식입니다 (${fileValidation.fileType}). PDF 또는 DOCX 파일을 업로드해주세요.`
       }, 400)
     }
     
+    console.log(`✅ 파일 검증 성공: ${fileValidation.fileType} (${fileValidation.mimeType})`)
+    
     let extractedText = ''
     
-    if (fileValidation.fileType === 'pdf') {
-      const pdfResult = await pdfParser.extractTextFromPdf(fileBuffer, fileName)
-      extractedText = pdfResult.text
-      console.log(`PDF 텍스트 추출 완료: ${extractedText.length}자`)
-    } else if (fileValidation.fileType === 'docx') {
-      const docxResult = await pdfParser.extractTextFromDocx(fileBuffer, fileName)
-      extractedText = docxResult.text
-      console.log(`DOCX 텍스트 추출 완료: ${extractedText.length}자`)
+    try {
+      if (fileValidation.fileType === 'pdf') {
+        const pdfResult = await pdfParser.extractTextFromPdf(fileBuffer, fileName)
+        extractedText = pdfResult.text
+        console.log(`✅ PDF 텍스트 추출 완료: ${extractedText.length}자`)
+      } else if (fileValidation.fileType === 'docx') {
+        const docxResult = await pdfParser.extractTextFromDocx(fileBuffer, fileName)
+        extractedText = docxResult.text
+        console.log(`✅ DOCX 텍스트 추출 완료: ${extractedText.length}자`)
+      }
+    } catch (extractError) {
+      console.error('❌ 텍스트 추출 오류:', extractError)
+      throw new Error(`문서에서 텍스트를 추출할 수 없습니다: ${extractError.message}`)
     }
+    
+    // 추출된 텍스트 검증
+    if (!extractedText || extractedText.length < 10) {
+      console.error(`❌ 텍스트 추출 실패 또는 내용이 부족: ${extractedText.length}자`)
+      return c.json({
+        success: false,
+        error: '문서에서 읽을 수 있는 텍스트를 찾을 수 없습니다. PDF/DOCX 파일이 올바른지 확인해주세요.'
+      }, 400)
+    }
+
+    console.log(`📝 텍스트 추출 성공: ${extractedText.length}자 - 분석 시작`)
     
     // RFP 분석 서비스 실행
     const rfpAnalysis = new RfpAnalysisService(env.OPENAI_API_KEY)
-    const storage = new JsonStorageService(env.KV)
+    // Railway 환경에서는 KV storage 대신 전역 메모리 저장소 사용
+    const storage = env.KV ? new JsonStorageService(env.KV) : null
     
     let rfpAnalysisData
     const isUnbound = isWorkersUnbound()
@@ -486,6 +507,14 @@ app.post('/api/customers/rfp-analysis', async (c) => {
       console.log('기본 RFP 분석 완료')
     }
     
+    // RFP 분석 결과 검증
+    if (!rfpAnalysisData || typeof rfpAnalysisData !== 'object') {
+      console.error('❌ RFP 분석 결과가 비어있음:', rfpAnalysisData)
+      throw new Error('RFP 분석이 실패했습니다. 파일을 다시 확인해주세요.')
+    }
+    
+    console.log(`✅ RFP 분석 완료: ${Object.keys(rfpAnalysisData).length}개 속성`)
+    
     // 결과 저장
     const storageKey = `rfp_analysis:${fileName}:${Date.now()}`
     const analysisResult = {
@@ -497,19 +526,31 @@ app.post('/api/customers/rfp-analysis', async (c) => {
       analysis_timestamp: new Date().toISOString()
     }
     
-    if (env.KV) {
-      await env.KV.put(storageKey, JSON.stringify(analysisResult), {
-        metadata: {
-          type: 'rfp_analysis',
-          file_name: fileName,
-          timestamp: new Date().toISOString()
-        }
-      })
+    // Railway 환경용 전역 메모리 저장소에 저장
+    try {
+      globalMemoryStore.set(storageKey, analysisResult)
+      console.log(`✅ RFP 분석 결과 저장 완료: ${storageKey}`)
+      
+      // KV Storage도 시도 (Cloudflare 환경용)
+      if (env.KV) {
+        await env.KV.put(storageKey, JSON.stringify(analysisResult), {
+          metadata: {
+            type: 'rfp_analysis',
+            file_name: fileName,
+            timestamp: new Date().toISOString()
+          }
+        })
+        console.log(`☁️ KV Storage RFP 분석 저장도 성공: ${storageKey}`)
+      }
+    } catch (storageError) {
+      console.log('❌ RFP 분석 결과 저장 오류:', storageError.message)
+      // 저장 실패해도 분석 결과는 반환
     }
     
     return c.json({
       success: true,
-      data: analysisResult,
+      data: rfpAnalysisData, // 실제 분석 데이터 반환
+      rfp_analysis_result: analysisResult, // 전체 결과 객체
       storage_key: storageKey
     })
     
@@ -2683,10 +2724,21 @@ app.get('/customer-generation', (c) => {
                             <i class="fas fa-rocket"></i>
                             데모 RFP 로드
                         </button>
-                        <button id="demo2-rfp-analysis" class="pwc-btn" style="background: linear-gradient(135deg, var(--pwc-blue), #0066cc); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 102, 204, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 102, 204, 0.3)'">
+                        <button id="rfp-ai-analysis" class="pwc-btn" style="background: linear-gradient(135deg, var(--pwc-blue), #0066cc); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 102, 204, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 102, 204, 0.3)'" disabled>
                             <i class="fas fa-brain" style="margin-right: var(--spacing-xs);"></i>
-                            AI RFP 분석 (실제 LLM)
+                            RFP AI 분석
                         </button>
+                    </div>
+                    
+                    <!-- 업로드된 파일 정보 표시 -->
+                    <div id="uploaded-file-info" class="pwc-alert pwc-alert-info" style="display: none; margin-top: var(--spacing-lg);">
+                        <h4 style="font-weight: 600; margin-bottom: var(--spacing-sm); word-break: keep-all;">
+                            <i class="fas fa-file-check" style="color: var(--pwc-blue); margin-right: var(--spacing-xs);"></i>
+                            업로드된 파일
+                        </h4>
+                        <div id="file-details" style="font-size: 0.9rem; line-height: 1.5; word-break: keep-all;">
+                            <!-- 동적으로 채워짐 -->
+                        </div>
                     </div>
                 </div>
 
