@@ -916,7 +916,10 @@ app.post('/api/evaluations/proposal', async (c) => {
               credibility: { score: 4, comment: "신뢰성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" }
             },
             weighted_total_score: 82,
-            persona_feedback: "30개 속성 페르소나 관점에서의 종합 피드백",
+            overall_feedback: "30개 속성 페르소나 관점에서의 종합 평가 (2-3문장)",
+            key_strengths: ["구체적 강점1", "구체적 강점2", "구체적 강점3"],
+            improvement_areas: ["구체적 개선점1", "구체적 개선점2", "구체적 개선점3"],
+            persona_feedback: "고객 페르소나 특성 반영 종합 의견",
             priority_alignment: "핵심 우선순위 5개와의 부합도 분석",
             concern_mitigation: "주요 우려사항 5개 해소 정도",
             decision_recommendation: "의사결정 특성에 따른 추천도"

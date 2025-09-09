@@ -403,6 +403,29 @@ export class PDFGeneratorService {
             <h3>📋 종합 평가</h3>
             <p>${feedback.summary}</p>
         </div>
+        
+        ${proposalEvaluation && proposalEvaluation.evaluation_method === 'llm' ? `
+        <div class="feedback-item">
+            <h3>🤖 AI 상세 분석</h3>
+            <div style="font-size: 12px; line-height: 1.5; color: #4b5563;">
+                ${proposalEvaluation.scores && Object.values(proposalEvaluation.scores)
+                    .map((score: any) => score.comment && score.comment.length > 20 ? 
+                        `<div style="margin-bottom: 8px; padding: 8px; background: #f9fafb; border-radius: 4px;">
+                            <strong>${score.persona_factor ? '🎯 ' + score.persona_factor + ':' : ''}</strong>
+                            ${score.comment}
+                        </div>` : ''
+                    ).join('')}
+                ${proposalEvaluation.priority_alignment ? 
+                    `<div style="margin-top: 10px; padding: 8px; background: #eff6ff; border-radius: 4px;">
+                        <strong>📌 우선순위 부합도:</strong> ${proposalEvaluation.priority_alignment}
+                    </div>` : ''}
+                ${proposalEvaluation.concern_mitigation ? 
+                    `<div style="margin-top: 10px; padding: 8px; background: #f0fdf4; border-radius: 4px;">
+                        <strong>🛡️ 우려사항 해소:</strong> ${proposalEvaluation.concern_mitigation}
+                    </div>` : ''}
+            </div>
+        </div>
+        ` : ''}
     </div>
 
     <div class="footer">
@@ -425,14 +448,24 @@ export class PDFGeneratorService {
     const aiComments = {
       strengths: [] as string[],
       improvements: [] as string[],
-      summary: ''
+      summary: '',
+      personaFeedback: '',
+      detailedComments: [] as string[]
     }
     
     // 제안서 AI 평가 코멘트 분석
     if (proposalEval && proposalEval.evaluation_method === 'llm') {
+      // 종합 피드백
       if (proposalEval.overall_feedback) {
         aiComments.summary = proposalEval.overall_feedback
       }
+      
+      // 페르소나 피드백
+      if (proposalEval.persona_feedback) {
+        aiComments.personaFeedback = proposalEval.persona_feedback
+      }
+      
+      // 강점 추출
       if (proposalEval.key_strengths) {
         if (Array.isArray(proposalEval.key_strengths)) {
           aiComments.strengths.push(...proposalEval.key_strengths)
@@ -440,6 +473,8 @@ export class PDFGeneratorService {
           aiComments.strengths.push(proposalEval.key_strengths)
         }
       }
+      
+      // 개선점 추출
       if (proposalEval.improvement_areas) {
         if (Array.isArray(proposalEval.improvement_areas)) {
           aiComments.improvements.push(...proposalEval.improvement_areas)
@@ -447,25 +482,95 @@ export class PDFGeneratorService {
           aiComments.improvements.push(proposalEval.improvement_areas)
         }
       }
+      
+      // 각 지표별 상세 코멘트 수집
+      if (proposalEval.scores) {
+        Object.values(proposalEval.scores).forEach((score: any) => {
+          if (score.comment && score.comment.length > 20) { // 의미있는 코멘트만
+            aiComments.detailedComments.push(score.comment)
+          }
+        })
+      }
     }
     
     // 발표 AI 평가 코멘트 분석
     if (presentationEval && presentationEval.evaluation_method === 'llm') {
-      if (presentationEval.overall_feedback && !aiComments.summary) {
-        aiComments.summary = presentationEval.overall_feedback
+      // 발표 피드백 통합 (제안서와 함께)
+      if (presentationEval.overall_feedback) {
+        if (aiComments.summary) {
+          aiComments.summary += ' 발표 측면에서는 ' + presentationEval.overall_feedback
+        } else {
+          aiComments.summary = presentationEval.overall_feedback
+        }
+      }
+      
+      // 발표 강점 추가
+      if (presentationEval.key_strengths) {
+        if (Array.isArray(presentationEval.key_strengths)) {
+          aiComments.strengths.push(...presentationEval.key_strengths.map(s => `[발표] ${s}`))
+        }
+      }
+      
+      // 발표 개선점 추가
+      if (presentationEval.improvement_areas) {
+        if (Array.isArray(presentationEval.improvement_areas)) {
+          aiComments.improvements.push(...presentationEval.improvement_areas.map(s => `[발표] ${s}`))
+        }
+      }
+      
+      // 발표 지표별 코멘트 수집
+      if (presentationEval.scores) {
+        Object.values(presentationEval.scores).forEach((score: any) => {
+          if (score.comment && score.comment.length > 20) {
+            aiComments.detailedComments.push(`[발표] ${score.comment}`)
+          }
+        })
       }
     }
     
-    // AI 평가 코멘트가 있으면 우선 사용, 없으면 점수 기반 피드백 생성
+    // AI 평가 코멘트를 우선 사용하고, 풍부한 피드백 제공
     let strengths: string[]
     let improvements: string[]
     let summary: string
     
     if (aiComments.strengths.length > 0 || aiComments.improvements.length > 0 || aiComments.summary) {
-      // AI 평가 코멘트 사용
-      strengths = aiComments.strengths.length > 0 ? aiComments.strengths : ['AI가 분석한 전문적인 내용 구성']
-      improvements = aiComments.improvements.length > 0 ? aiComments.improvements : ['AI 분석 기반 추가 개선 방향 권장']
-      summary = aiComments.summary || '고객 페르소나에 기반한 AI 분석 결과입니다.'
+      console.log('📝 AI 평가 코멘트 사용 - 풍부한 피드백 제공')
+      
+      // AI 강점 분석 (더 구체적으로)
+      strengths = []
+      if (aiComments.strengths.length > 0) {
+        strengths = aiComments.strengths
+      } else {
+        // 점수 기반 보완
+        if (finalScores.expertise >= 45) strengths.push('뛰어난 전문성과 도메인 지식')
+        if (finalScores.credibility >= 45) strengths.push('높은 신뢰성과 실현가능성')
+        if (finalScores.clarity >= 40) strengths.push('명확하고 체계적인 구성')
+        if (finalScores.logic >= 40) strengths.push('논리적이고 체계적인 접근')
+      }
+      
+      // AI 개선점 분석 (더 구체적으로)
+      improvements = []
+      if (aiComments.improvements.length > 0) {
+        improvements = aiComments.improvements
+      } else {
+        // 점수 기반 보완
+        if (finalScores.creativity < 35) improvements.push('창의적 차별화 요소 강화')
+        if (finalScores.clarity < 35) improvements.push('핵심 메시지 명확성 개선')
+        if (finalScores.persuasiveness < 35) improvements.push('고객 맞춤 설득력 강화')
+      }
+      
+      // AI 종합 평가 (페르소나 피드백 포함)
+      summary = ''
+      if (aiComments.summary) {
+        summary = aiComments.summary
+      }
+      if (aiComments.personaFeedback) {
+        summary += summary ? ' ' + aiComments.personaFeedback : aiComments.personaFeedback
+      }
+      if (!summary) {
+        summary = '고객 페르소나 기반 AI 분석 결과, 전반적으로 우수한 제안입니다.'
+      }
+      
     } else {
       // 점수 기반 피드백 생성 (100점 만점 기준)
       strengths = []
