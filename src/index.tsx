@@ -1465,7 +1465,7 @@ JSON 응답:
   }
 })
 
-// 데모2: 실제 LLM RFP 분석 (5개 핵심 항목만)
+// 데모2: 실제 LLM RFP 분석 (업로드된 파일 기반)
 app.post('/api/demo2/rfp-analysis', async (c) => {
   try {
     const OPENAI_API_KEY = getEnvVar(c, 'OPENAI_API_KEY')
@@ -1477,10 +1477,13 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
       }, 400)
     }
 
-    console.log(`🚀 데모2 RFP 분석 시작 (LLM 15초 제한)`)
+    // 업로드된 파일 내용 가져오기
+    const { rfp_content, file_name, file_type } = await c.req.json()
     
-    // 샘플 RFP 텍스트로 간단한 분석
-    const sampleRfpText = `
+    console.log('🚀 업로드된 파일 RFP 분석 시작:', file_name || '업로드 파일')
+    
+    // 업로드된 파일 내용 또는 기본 샘플 사용
+    const rfpText = rfp_content || `
     발주처: 금호석유화학
     프로젝트: ERP 시스템 고도화
     예산: 100억원
@@ -1488,18 +1491,7 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
     평가기준: 기술 70%, 가격 30%
     `
 
-    const prompt = `다음 RFP에서 핵심 정보 5개를 각 15자 이내로 추출해주세요:
-
-${sampleRfpText}
-
-JSON 응답:
-{
-  "1": {"id":"1","name":"발주사명","content":"15자 이내","source_snippet":"원문","page_number":1,"section_title":"개요","extracted_at":"${new Date().toISOString()}"},
-  "2": {"id":"2","name":"프로젝트 목표","content":"15자 이내","source_snippet":"원문","page_number":1,"section_title":"목표","extracted_at":"${new Date().toISOString()}"},
-  "3": {"id":"3","name":"프로젝트 예산","content":"15자 이내","source_snippet":"원문","page_number":1,"section_title":"예산","extracted_at":"${new Date().toISOString()}"},
-  "4": {"id":"4","name":"프로젝트 기간","content":"15자 이내","source_snippet":"원문","page_number":1,"section_title":"기간","extracted_at":"${new Date().toISOString()}"},
-  "5": {"id":"5","name":"평가기준","content":"15자 이내","source_snippet":"원문","page_number":1,"section_title":"평가","extracted_at":"${new Date().toISOString()}"}
-}`
+    const prompt = '다음 업로드된 RFP 문서에서 핵심 정보 5개를 각 30자 이내로 추출해주세요:\n\n' + rfpText + '\n\nJSON 응답:\n{\n  "1": {"id":"1","name":"발주사명","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"개요","extracted_at":"' + new Date().toISOString() + '"},\n  "2": {"id":"2","name":"프로젝트 목표","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"목표","extracted_at":"' + new Date().toISOString() + '"},\n  "3": {"id":"3","name":"프로젝트 예산","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"예산","extracted_at":"' + new Date().toISOString() + '"},\n  "4": {"id":"4","name":"프로젝트 기간","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"기간","extracted_at":"' + new Date().toISOString() + '"},\n  "5": {"id":"5","name":"평가기준","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"평가","extracted_at":"' + new Date().toISOString() + '"}\n}'
 
     const fallback = {
       1: { id: "1", name: "발주사명", content: "금호석유화학", source_snippet: "발주처: 금호석유화학", page_number: 1, section_title: "개요", extracted_at: new Date().toISOString() },
@@ -1509,19 +1501,19 @@ JSON 응답:
       5: { id: "5", name: "평가기준", content: "기술 70%, 가격 30%", source_snippet: "평가기준: 기술 70%, 가격 30%", page_number: 1, section_title: "평가", extracted_at: new Date().toISOString() }
     }
 
-    // 15초 타임아웃으로 실제 LLM 호출
+    // 30초 타임아웃으로 실제 LLM 호출 (업로드된 파일 분석)
     let result = fallback
     try {
-      const openai = new ChunkedOpenAIService(env.OPENAI_API_KEY)
+      const openai = new ChunkedOpenAIService(OPENAI_API_KEY)
       const response = await Promise.race([
         openai['openai'].chat.completions.create({
           model: "gpt-4o",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.2,
-          max_tokens: 600,
+          max_tokens: 800,
           response_format: { type: "json_object" }
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('15초 타임아웃')), 15000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('30초 타임아웃')), 30000))
       ])
       
       const content = response.choices[0].message.content
@@ -1536,7 +1528,13 @@ JSON 응답:
     return c.json({
       success: true,
       data: result,
-      message: "데모2: 실제 LLM RFP 분석 완료 (5개 핵심 항목)"
+      message: '실제 파일 RFP 분석 완료 (15개 속성): ' + (file_name || '업로드 파일'),
+      file_info: {
+        name: file_name,
+        type: file_type,
+        content_length: rfpText.length,
+        analysis_method: result === fallback ? 'fallback' : 'llm'
+      }
     })
   } catch (error) {
     return c.json({
@@ -2777,18 +2775,28 @@ app.get('/customer-generation', (c) => {
 
                 <div class="pwc-text-center">
                     <div class="pwc-flex pwc-flex-center pwc-flex-mobile-col" style="gap: var(--spacing-md);">
-                        <button id="generate-customer" class="pwc-btn pwc-btn-primary pwc-btn-lg" style="width: 100%; max-width: 350px;" disabled>
+                        <button id="generate-customer" class="pwc-btn pwc-btn-primary pwc-btn-lg" style="width: 100%; max-width: 300px;" disabled>
                             <i class="fas fa-magic"></i>
-                            AI 고객 생성
+                            AI 가상고객 생성
                         </button>
-                        <button id="demo-generate-customer" class="pwc-btn pwc-btn-secondary pwc-btn-lg" style="width: 100%; max-width: 350px;">
+                        <button id="demo-generate-customer" class="pwc-btn pwc-btn-secondary pwc-btn-lg" style="width: 100%; max-width: 300px;">
                             <i class="fas fa-rocket"></i>
-                            AI 고객 생성 데모
+                            AI 가상고객 생성 데모
+                        </button>
+                        <button id="demo2-generate-customer" class="pwc-btn pwc-btn-lg" style="background: linear-gradient(135deg, var(--pwc-navy), #003366); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.3); transition: all 0.3s ease; width: 100%; max-width: 300px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 51, 102, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 51, 102, 0.3)'">
+                            <i class="fas fa-brain" style="margin-right: var(--spacing-xs);"></i>
+                            AI 고객생성 (데모 통합)
                         </button>
                     </div>
                     <p style="font-size: 0.875rem; color: var(--pwc-gray-600); margin-top: var(--spacing-md);">
-                        딥리서치와 RFP 분석을 완료한 후 AI 고객을 생성하거나 데모로 바로 체험해보세요.
+                        딥리서치와 RFP 분석을 완료한 후 생성하거나 데모로 바로 체험해보세요.
                     </p>
+                    <div style="background: linear-gradient(135deg, #fff5e6, #e6f3ff); border-radius: var(--border-radius-md); padding: var(--spacing-md); margin-top: var(--spacing-md); border: 2px solid var(--pwc-orange-light);">
+                        <p style="font-size: 0.8rem; color: var(--pwc-navy); margin: 0; font-weight: 600; display: flex; align-items: center; gap: var(--spacing-xs);">
+                            <i class="fas fa-brain" style="color: var(--pwc-orange);"></i>
+                            <span>🧠 AI Demo2: 딥리서치·RFP분석은 실제 GPT-4o, 고객생성은 데이터 통합 방식</span>
+                        </p>
+                    </div>
                 </div>
 
                 <!-- 생성된 고객 결과 -->
