@@ -9,13 +9,13 @@ import type {
 
 export class DemoDataService {
   
-  // 1️⃣ 금고석유화학 샘플 딥리서치 데이터 (15속성)
-  static getSampleDeepResearchData(): DeepResearchData {
+  // 1️⃣ 샘플 딥리서치 데이터 (15속성) - 회사명 동적 적용
+  static getSampleDeepResearchData(companyName: string = '샘플기업'): DeepResearchData {
     return {
       1: {
         id: "1",
         name: "비전·미션",
-        content: "지속가능한 화학소재로 인류의 삶을 풍요롭게 한다",
+        content: `${companyName}의 혁신과 지속가능한 성장을 추구`,
         source_url: "https://www.kumhopetrochemical.com",
         source_type: "homepage",
         reliability_score: 9,
@@ -166,12 +166,12 @@ export class DemoDataService {
   }
 
   // 2️⃣ 샘플 RFP 분석 데이터 (15속성)
-  static getSampleRfpAnalysisData(): RfpAnalysisData {
+  static getSampleRfpAnalysisData(companyName: string = '샘플기업'): RfpAnalysisData {
     return {
       1: {
         id: "1",
         name: "발주사명",
-        content: "금고석유화학",
+        content: companyName,
         source_snippet: "발주처: 금고석유화학 주식회사",
         page_number: 1,
         section_title: "프로젝트 개요",
@@ -307,11 +307,11 @@ export class DemoDataService {
   }
 
   // 3️⃣ 생성된 AI 가상고객 샘플
-  static getSampleAIVirtualCustomer(): AIVirtualCustomer {
+  static getSampleAIVirtualCustomer(companyName: string = '샘플기업'): AIVirtualCustomer {
     return {
       id: "demo-customer-kumho-2025",
-      name: "김성호 상무 (AI 가상고객)",
-      company_name: "금고석유화학",
+      name: `${companyName} CTO (AI 가상고객)`,
+      company_name: companyName,
       department: "Digital Innovation팀",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(), 
@@ -328,8 +328,8 @@ export class DemoDataService {
       decision_making_style: "데이터 기반 + 단계적 검증 + 장기적 관점에서의 신중한 의사결정. 안정성을 중시하되 필요시 혁신적 기술 도입에 적극적",
       
       // 30속성 통합 데이터
-      deep_research_data: this.getSampleDeepResearchData(),
-      rfp_analysis_data: this.getSampleRfpAnalysisData(),
+      deep_research_data: this.getSampleDeepResearchData(companyName),
+      rfp_analysis_data: this.getSampleRfpAnalysisData(companyName),
       combined_attributes: {
         strategic_focus: "ESG 기반 지속가능 성장 + 글로벌 경쟁력 강화",
         risk_appetite: "보수적 재무운영 + 선제적 규제대응",

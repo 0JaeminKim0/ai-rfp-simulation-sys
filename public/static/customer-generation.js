@@ -569,13 +569,15 @@ class CustomerGenerationApp {
     try {
       this.showLoading('데모 딥리서치 데이터 로딩 중...')
       
-      // 회사명을 금고석유화학으로 설정
+      // 회사명 자동 설정
       const companyNameInput = document.getElementById('company-name')
       if (companyNameInput) {
-        companyNameInput.value = '금고석유화학'
+        companyNameInput.value = companyName
       }
 
-      const response = await axios.get('/api/demo/deep-research')
+      const response = await axios.get('/api/demo/deep-research', {
+        params: { company_name: companyName }
+      })
 
       if (response.data.success) {
         this.deepResearchData = response.data.data
@@ -585,7 +587,7 @@ class CustomerGenerationApp {
         this.checkGenerationReady()
         
         // 성공 메시지 표시
-        this.showSuccessMessage('금고석유화학 딥리서치 15속성 데이터가 성공적으로 로드되었습니다!')
+        this.showSuccessMessage(`${companyName} 딥리서치 15속성 데이터가 성공적으로 로드되었습니다!`)
       } else {
         throw new Error(response.data.error || '데모 데이터 로드 실패')
       }
@@ -601,7 +603,10 @@ class CustomerGenerationApp {
     try {
       this.showLoading('데모 RFP 분석 데이터 로딩 중...')
 
-      const response = await axios.get('/api/demo/rfp-analysis')
+      const companyName = document.getElementById('company-name')?.value || '테스트기업'
+      const response = await axios.get('/api/demo/rfp-analysis', {
+        params: { company_name: companyName }
+      })
 
       if (response.data.success) {
         this.rfpAnalysisData = response.data.data
@@ -683,7 +688,7 @@ class CustomerGenerationApp {
         // 회사명 자동 입력
         const companyNameInput = document.getElementById('company-name')
         if (companyNameInput) {
-          companyNameInput.value = '금고석유화학'
+          companyNameInput.value = companyName
         }
       }
 
@@ -691,7 +696,9 @@ class CustomerGenerationApp {
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // 2단계: 데모 RFP 분석 데이터 자동 로드
-      const rfpResponse = await axios.get('/api/demo/rfp-analysis')
+      const rfpResponse = await axios.get('/api/demo/rfp-analysis', {
+        params: { company_name: companyName }
+      })
       if (rfpResponse.data.success) {
         this.rfpAnalysisData = rfpResponse.data.data
         this.displayRfpResults()
@@ -702,7 +709,7 @@ class CustomerGenerationApp {
 
       // 3단계: AI 가상고객 생성
       const customerResponse = await axios.post('/api/demo/generate-customer', {
-        company_name: '금고석유화학',
+        company_name: companyName,
         project_type: 'ERP-MES-ESG 통합 DX 플랫폼'
       })
 
@@ -742,7 +749,7 @@ class CustomerGenerationApp {
   // === Demo2 기능들 (실제 LLM 사용) ===
 
   async startDemo2DeepResearch() {
-    const companyName = document.getElementById('company-name')?.value || '금고석유화학'
+    const companyName = document.getElementById('company-name')?.value || '테스트기업'
     
     try {
       this.showLoading('🧠 AI가 실제로 기업 분석 중... (최대 15초)')  
@@ -810,7 +817,7 @@ class CustomerGenerationApp {
   }
 
   async startDemo2CustomerGeneration() {
-    const companyName = document.getElementById('company-name')?.value || '금고석유화학'
+    const companyName = document.getElementById('company-name')?.value || '테스트기업'
     
     // 안전한 데모 데이터 기반 AI 가상고객 생성 프로세스
     try {

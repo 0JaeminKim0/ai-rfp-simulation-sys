@@ -1165,11 +1165,12 @@ app.post('/api/sessions', async (c) => {
 // 데모 딥리서치 데이터 조회
 app.get('/api/demo/deep-research', (c) => {
   try {
-    const demoData = DemoDataService.getSampleDeepResearchData()
+    const companyName = c.req.query('company_name') || '샘플기업'
+    const demoData = DemoDataService.getSampleDeepResearchData(companyName)
     return c.json({
       success: true,
       data: demoData,
-      message: "금고석유화학 샘플 딥리서치 데이터 (15속성)"
+      message: "샘플 딥리서치 데이터 (15속성)"
     })
   } catch (error) {
     return c.json({
@@ -1182,7 +1183,8 @@ app.get('/api/demo/deep-research', (c) => {
 // 데모 RFP 분석 데이터 조회
 app.get('/api/demo/rfp-analysis', (c) => {
   try {
-    const demoData = DemoDataService.getSampleRfpAnalysisData()
+    const companyName = c.req.query('company_name') || '샘플기업'
+    const demoData = DemoDataService.getSampleRfpAnalysisData(companyName)
     return c.json({
       success: true,
       data: demoData,
