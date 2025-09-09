@@ -7,6 +7,9 @@ const port = parseInt(process.env.PORT) || 3000
 
 console.log(`🚀 Starting RFP AI Simulator on port ${port}`)
 console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`)
+console.log(`🌐 Railway Environment: ${process.env.RAILWAY_ENVIRONMENT_NAME || 'N/A'}`)
+console.log(`🔗 Railway Public URL: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'N/A'}`)
+console.log(`🆔 Railway Service ID: ${process.env.RAILWAY_SERVICE_ID || 'N/A'}`)
 
 try {
   // 빌드된 앱 임포트 시도
@@ -29,6 +32,13 @@ try {
   }
 
   console.log('✅ App imported successfully')
+
+  // Railway 헬스체크를 위한 간단한 엔드포인트 추가
+  app.get('/health', (c) => c.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    port: port 
+  }))
 
   // Railway 환경에서 정적 파일 서빙
   app.use('/static/*', serveStatic({ root: './public' }))
