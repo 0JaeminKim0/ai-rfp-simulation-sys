@@ -49,6 +49,16 @@ if (typeof globalThis.process === 'undefined') {
 
 // === 헬퍼 함수들 ===
 
+// 환경변수 접근 헬퍼 (Railway Node.js vs Cloudflare Workers 호환)
+function getEnvVar(c: any, key: string): string | undefined {
+  // Railway (Node.js) 환경
+  if (typeof globalThis.process !== 'undefined') {
+    return process.env[key]
+  }
+  // Cloudflare Workers 환경
+  return c.env?.[key]
+}
+
 // NLP 기반 RFP 분석 (고도화된 키워드 추출 + 구조화)
 async function generateNLPRfpAnalysis(text: string, fileName: string) {
   
@@ -1185,10 +1195,16 @@ app.post('/api/demo/generate-customer', async (c) => {
 app.post('/api/demo2/deep-research', async (c) => {
   try {
     const { company_name } = await c.req.json()
-    const { env } = c
     
-    if (!env.OPENAI_API_KEY) {
+    const OPENAI_API_KEY = getEnvVar(c, 'OPENAI_API_KEY')
+    
+    if (!OPENAI_API_KEY) {
       console.error('❌ Demo2 딥리서치: OpenAI API 키가 설정되지 않음')
+      console.error('환경 확인:', {
+        isNode: typeof globalThis.process !== 'undefined',
+        hasProcessEnv: !!process.env,
+        keyExists: !!process.env.OPENAI_API_KEY
+      })
       return c.json({
         success: false,
         error: 'OpenAI API key가 설정되지 않았습니다. Railway 환경변수에서 OPENAI_API_KEY를 설정해주세요.'
@@ -1220,7 +1236,7 @@ JSON 응답:
     // 15초 타임아웃으로 실제 LLM 호출
     let result = fallback
     try {
-      const openai = new ChunkedOpenAIService(env.OPENAI_API_KEY)
+      const openai = new ChunkedOpenAIService(OPENAI_API_KEY)
       const response = await Promise.race([
         openai['openai'].chat.completions.create({
           model: "gpt-4o",
@@ -1257,9 +1273,9 @@ JSON 응답:
 // 데모2: 실제 LLM RFP 분석 (5개 핵심 항목만)
 app.post('/api/demo2/rfp-analysis', async (c) => {
   try {
-    const { env } = c
+    const OPENAI_API_KEY = getEnvVar(c, 'OPENAI_API_KEY')
     
-    if (!env.OPENAI_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return c.json({
         success: false,
         error: 'OpenAI API key가 설정되지 않았습니다'

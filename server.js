@@ -10,6 +10,7 @@ console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`)
 console.log(`🌐 Railway Environment: ${process.env.RAILWAY_ENVIRONMENT_NAME || 'N/A'}`)
 console.log(`🔗 Railway Public URL: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'N/A'}`)
 console.log(`🆔 Railway Service ID: ${process.env.RAILWAY_SERVICE_ID || 'N/A'}`)
+console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✅ 설정됨 (길이: ' + process.env.OPENAI_API_KEY.length + ')' : '❌ 미설정'}`)
 
 try {
   // 빌드된 앱 임포트 시도
