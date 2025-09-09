@@ -1201,7 +1201,10 @@ app.get('/api/demo/rfp-analysis', (c) => {
 // 데모 AI 가상고객 생성
 app.post('/api/demo/generate-customer', async (c) => {
   try {
-    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer()
+    const body = await c.req.json()
+    const companyName = body.company_name || '샘플기업'
+    
+    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer(companyName)
     const customerId = `demo-customer-${Date.now()}`
     
     const customerWithId = { ...demoCustomer, id: customerId }

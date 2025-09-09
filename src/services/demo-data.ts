@@ -310,7 +310,7 @@ export class DemoDataService {
   static getSampleAIVirtualCustomer(companyName: string = '샘플기업'): AIVirtualCustomer {
     return {
       id: "demo-customer-kumho-2025",
-      name: `${companyName} CTO (AI 가상고객)`,
+      name: companyName,
       company_name: companyName,
       department: "Digital Innovation팀",
       created_at: new Date().toISOString(),
