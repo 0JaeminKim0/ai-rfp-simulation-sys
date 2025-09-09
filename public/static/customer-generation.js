@@ -770,7 +770,13 @@ class CustomerGenerationApp {
       }
     } catch (error) {
       console.error('Demo2 딥리서치 오류:', error)
-      this.showErrorMessage('AI 딥리서치 중 오류가 발생했습니다: ' + error.message)
+      
+      // 400 에러 (API 키 문제) 처리
+      if (error.response && error.response.status === 400) {
+        this.showErrorMessage(`❌ 설정 문제: ${error.response.data?.error || 'OpenAI API 키가 설정되지 않았습니다'}`)
+      } else {
+        this.showErrorMessage('AI 딥리서치 중 오류가 발생했습니다: ' + error.message)
+      }
     } finally {
       this.hideLoading()
     }

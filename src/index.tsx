@@ -1188,9 +1188,10 @@ app.post('/api/demo2/deep-research', async (c) => {
     const { env } = c
     
     if (!env.OPENAI_API_KEY) {
+      console.error('❌ Demo2 딥리서치: OpenAI API 키가 설정되지 않음')
       return c.json({
         success: false,
-        error: 'OpenAI API key가 설정되지 않았습니다'
+        error: 'OpenAI API key가 설정되지 않았습니다. Railway 환경변수에서 OPENAI_API_KEY를 설정해주세요.'
       }, 400)
     }
 
