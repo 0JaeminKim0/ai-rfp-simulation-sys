@@ -71,6 +71,16 @@ class ProposalEvaluationApp {
         const select = document.getElementById('customer-select')
         const customers = response.data.data
 
+        // 고객이 없을 때 안내 메시지
+        if (customers.length === 0) {
+          const option = document.createElement('option')
+          option.value = ''
+          option.textContent = '먼저 AI 가상고객을 생성해주세요 (고객 생성 페이지에서)'
+          option.disabled = true
+          select.appendChild(option)
+          return
+        }
+
         // 옵션 추가
         customers.forEach(customer => {
           const option = document.createElement('option')

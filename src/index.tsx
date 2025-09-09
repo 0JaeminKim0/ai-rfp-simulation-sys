@@ -195,18 +195,7 @@ app.get('/api/customers', async (c) => {
     const storage = new JsonStorageService(c.env.KV)
     const customers = await storage.getAllVirtualCustomers()
     
-    // 데모용: 고객이 없으면 데모 고객을 추가
-    if (customers.length === 0) {
-      const demoCustomer = DemoDataService.getSampleAIVirtualCustomer('생성된고객')
-      const demoCustomerId = `demo-customer-${Date.now()}`
-      const demoCustomerWithId = { ...demoCustomer, id: demoCustomerId }
-      
-      return c.json({
-        success: true,
-        data: [demoCustomerWithId]
-      })
-    }
-    
+    // 실제 저장된 고객 데이터만 반환 (빈 배열이어도 OK)
     return c.json({
       success: true,
       data: customers
@@ -214,14 +203,10 @@ app.get('/api/customers', async (c) => {
   } catch (error) {
     console.error('고객 목록 조회 오류:', error)
     
-    // Fallback: 데모 고객 반환
-    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer('생성된고객')
-    const demoCustomerId = `demo-customer-${Date.now()}`
-    const demoCustomerWithId = { ...demoCustomer, id: demoCustomerId }
-    
+    // 에러 시에도 빈 배열 반환
     return c.json({
       success: true,
-      data: [demoCustomerWithId]
+      data: []
     })
   }
 })
