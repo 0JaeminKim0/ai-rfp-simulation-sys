@@ -774,14 +774,11 @@ RFP 문서 분석을 위한 기본 정보:
     try {
       this.showLoading('데모 RFP 분석 데이터 로딩 중...')
 
-      // 데모 RFP 분석은 항상 "금호석유화학"으로 고정
-      const companyName = '금호석유화학'
-      
-      // 회사명 자동 설정 
+      // 현재 입력된 회사명 사용 (기존에 입력된 회사명 유지)
       const companyNameInput = document.getElementById('company-name')
-      if (companyNameInput) {
-        companyNameInput.value = companyName
-      }
+      const companyName = companyNameInput?.value || '샘플기업'
+      
+      console.log('🔍 데모 RFP 분석 - 사용할 회사명:', companyName)
       
       const response = await axios.get('/api/demo/rfp-analysis', {
         params: { company_name: companyName }
