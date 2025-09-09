@@ -778,7 +778,7 @@ app.post('/api/evaluations/proposal', async (c) => {
     // Railway 환경용 고객 조회
     let customer = null
     for (const [key, value] of globalMemoryStore.entries()) {
-      if (key.startsWith('customer:') && value.id === customer_id) {
+      if (key.startsWith('customer:') && (value.id === customer_id || value.customer_id === customer_id)) {
         customer = value
         break
       }
@@ -999,8 +999,20 @@ app.post('/api/evaluations/proposal', async (c) => {
       console.log('고객 페르소나 기반 제안서 평가 완료:', companyName)
     }
     
-    // 결과 저장
-    const evaluationId = await storage.saveProposalEvaluation(proposalEvaluation)
+    // 결과 저장 (Railway 환경에서는 메모리 저장)
+    const evaluationId = `eval-${Date.now()}`
+    const evaluationKey = `evaluation:${evaluationId}`
+    globalMemoryStore.set(evaluationKey, { ...proposalEvaluation, id: evaluationId })
+    
+    // KV Storage 백업 시도
+    if (env.KV) {
+      try {
+        const storage = new JsonStorageService(env.KV)
+        await storage.saveProposalEvaluation(proposalEvaluation)
+      } catch (kvError) {
+        console.log('KV 저장 실패, 메모리만 사용:', kvError.message)
+      }
+    }
     
     return c.json({
       success: true,
@@ -1718,12 +1730,8 @@ app.post('/api/demo2/generate-customer', async (c) => {
     const { company_name, deep_research_data, rfp_analysis_data } = await c.req.json()
     const { env } = c
     
-    if (!env.OPENAI_API_KEY) {
-      return c.json({
-        success: false,
-        error: 'OpenAI API key가 설정되지 않았습니다'
-      }, 400)
-    }
+    // OpenAI API 키가 없어도 30속성 통합 데모 데이터로 진행
+    const hasOpenAI = env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim().length > 0
 
     console.log(`🚀 데모2 AI 가상고객 생성 시작: ${company_name} (LLM 15초 제한)`)
     
@@ -1785,8 +1793,10 @@ app.post('/api/demo2/generate-customer', async (c) => {
 }`
 
     // 30속성 통합 폴백 데이터 (메인 API와 동일한 구조)
+    const customerId = crypto.randomUUID()
     const fallback = {
-      customer_id: crypto.randomUUID(),
+      id: customerId, // 호환성을 위해 id 필드 추가
+      customer_id: customerId,
       customer_type: 'CTO',
       name: `${company_name} CTO`,  // 회사명 + 직책
       company_name: company_name || '테스트기업',
@@ -1932,11 +1942,17 @@ app.post('/api/demo2/generate-customer', async (c) => {
       result.key_concerns = ['환경 규제', '안전성 확보', '원가 경쟁력']
     }
 
-    // KV Storage에 저장
+    // Railway 환경에서는 메모리에 저장 (KV 우선 시도)
+    const customerKey = `customer:${result.id}`
+    globalMemoryStore.set(customerKey, result)
+    console.log(`💾 메모리 저장 완료: ${result.company_name} (${customerKey})`)
+    
+    // KV Storage 백업 저장 시도
     if (c.env.KV) {
       try {
         const storage = new JsonStorageService(c.env.KV)
         await storage.saveVirtualCustomer(result)
+        console.log(`☁️ KV 저장도 완료: ${result.company_name}`)
       } catch (kvError) {
         console.log('KV 저장 실패, 메모리만 사용:', kvError.message)
       }
@@ -1966,7 +1982,7 @@ app.post('/api/demo/evaluate-proposal', async (c) => {
     // 고객 데이터 조회
     let customer = null
     for (const [key, value] of globalMemoryStore.entries()) {
-      if (key.startsWith('customer:') && value.id === customer_id) {
+      if (key.startsWith('customer:') && (value.id === customer_id || value.customer_id === customer_id)) {
         customer = value
         break
       }

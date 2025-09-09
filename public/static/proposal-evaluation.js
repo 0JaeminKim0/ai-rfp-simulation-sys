@@ -165,25 +165,33 @@ class ProposalEvaluationApp {
     try {
       this.showLoading('파일을 업로드하고 분석 중...')
 
-      // FormData 생성 및 파일 업로드
+      // FormData 생성하여 실제 파일 분석 API 호출
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('rfp_file', file)
+      formData.append('file_name', file.name)
+      formData.append('parsing_mode', 'detailed')
 
-      const response = await axios.post('/api/upload/file', formData, {
+      const response = await axios.post('/api/customers/rfp-analysis', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
 
       if (response.data.success) {
+        const analyzedData = response.data.data
+        
         this.uploadedProposal = {
           file: file,
           name: file.name,
           size: file.size,
           type: fileExtension,
-          parsedContent: response.data.data.parsed_content,
-          fileId: response.data.data.file_id
+          parsedContent: analyzedData.extracted_text || analyzedData.text_content,
+          rfpAnalysis: analyzedData.rfp_analysis_data,
+          fileAnalysis: analyzedData
         }
+
+        // 자동 입력: 제안서 제목과 제안사명 설정  
+        this.autoFillProposalInfo(file.name, this.uploadedProposal.parsedContent)
 
         this.displayUploadedFile()
         this.checkEvaluationReady()
@@ -198,6 +206,39 @@ class ProposalEvaluationApp {
     } finally {
       this.hideLoading()
     }
+  }
+
+  autoFillProposalInfo(fileName, parsedContent) {
+    // 제안서 제목 자동 생성 (파일명 기반)
+    let proposalTitle = fileName.replace(/\.[^/.]+$/, '') // 확장자 제거
+    
+    // 파일명 정리 (언더스코어, 하이픈을 공백으로 변환)
+    proposalTitle = proposalTitle.replace(/[_-]/g, ' ')
+    
+    // 파싱된 내용에서 제목 추출 시도
+    if (parsedContent) {
+      const titleMatch = parsedContent.match(/제안서\s*제목[:\s]*([^\n]+)|프로젝트명[:\s]*([^\n]+)|과제명[:\s]*([^\n]+)/i)
+      if (titleMatch) {
+        proposalTitle = titleMatch[1] || titleMatch[2] || titleMatch[3] || proposalTitle
+      }
+    }
+    
+    // 제안서 제목 자동 입력
+    const titleInput = document.getElementById('proposal-title')
+    if (titleInput && !titleInput.value.trim()) {
+      titleInput.value = proposalTitle.trim()
+    }
+    
+    // 제안사명을 PwC 컨설팅으로 자동 설정
+    const companyInput = document.getElementById('proposal-company')
+    if (companyInput && !companyInput.value.trim()) {
+      companyInput.value = 'PwC 컨설팅'
+    }
+    
+    console.log('✅ 자동 입력 완료:', {
+      title: proposalTitle.trim(),
+      company: 'PwC 컨설팅'
+    })
   }
 
   loadDemoProposal() {
@@ -306,10 +347,19 @@ class ProposalEvaluationApp {
 
         // 파싱된 내용 사용
         if (this.uploadedProposal.parsedContent) {
-          proposalContent = this.uploadedProposal.parsedContent.content
+          proposalContent = typeof this.uploadedProposal.parsedContent === 'string' 
+            ? this.uploadedProposal.parsedContent 
+            : this.uploadedProposal.parsedContent.content || JSON.stringify(this.uploadedProposal.parsedContent)
         } else {
           proposalContent = '파일 내용을 읽을 수 없습니다.'
         }
+        
+        console.log('📄 제안서 평가 데이터:', {
+          customer_id: this.selectedCustomer.id,
+          proposal_title: proposalTitle,
+          proposal_content_length: proposalContent.length,
+          proposal_content_preview: proposalContent.substring(0, 200) + '...'
+        })
         
         const response = await axios.post('/api/evaluations/proposal', {
           customer_id: this.selectedCustomer.id,
