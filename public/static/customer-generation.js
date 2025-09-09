@@ -684,16 +684,22 @@ class CustomerGenerationApp {
       
       // 0단계: 기존 스토리지 데이터 초기화 (새로운 고객 생성 전)
       try {
-        const clearResponse = await axios.post('/api/dev/clear-storage')
-        console.log('스토리지 초기화:', clearResponse.data.message)
+        const clearResponse = await axios.post('/api/dev/clear-storage', {}, { 
+          timeout: 10000 // 10초 타임아웃
+        })
+        console.log('✅ 스토리지 초기화 성공:', clearResponse.data.message)
       } catch (clearError) {
-        console.log('스토리지 초기화 실패 (무시):', clearError.message)
+        console.log('⚠️ 스토리지 초기화 실패 (계속 진행):', clearError.response?.data?.error || clearError.message)
+        // 스토리지 초기화 실패해도 계속 진행
       }
       
       // 1단계: 데모 딥리서치 데이터 자동 로드
+      console.log('🔍 1단계: 딥리서치 데이터 로드 시작, 회사명:', companyName)
       const deepResearchResponse = await axios.get('/api/demo/deep-research', {
         params: { company_name: companyName }
       })
+      console.log('🔍 딥리서치 응답:', deepResearchResponse.data)
+      
       if (deepResearchResponse.data.success) {
         this.deepResearchData = deepResearchResponse.data.data
         this.displayResearchResults()
@@ -703,28 +709,39 @@ class CustomerGenerationApp {
         if (companyNameInput) {
           companyNameInput.value = companyName
         }
+        console.log('✅ 1단계 딥리서치 완료')
+      } else {
+        throw new Error('딥리서치 데이터 로드 실패: ' + deepResearchResponse.data.error)
       }
 
       // 1초 대기 (사용자 경험)
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // 2단계: 데모 RFP 분석 데이터 자동 로드
+      console.log('📋 2단계: RFP 분석 데이터 로드 시작')
       const rfpResponse = await axios.get('/api/demo/rfp-analysis', {
         params: { company_name: companyName }
       })
+      console.log('📋 RFP 분석 응답:', rfpResponse.data)
+      
       if (rfpResponse.data.success) {
         this.rfpAnalysisData = rfpResponse.data.data
         this.displayRfpResults()
+        console.log('✅ 2단계 RFP 분석 완료')
+      } else {
+        throw new Error('RFP 분석 데이터 로드 실패: ' + rfpResponse.data.error)
       }
 
       // 1초 대기 (사용자 경험)
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // 3단계: AI 가상고객 생성
+      console.log('👤 3단계: AI 가상고객 생성 시작')
       const customerResponse = await axios.post('/api/demo/generate-customer', {
         company_name: companyName,
         project_type: 'ERP-MES-ESG 통합 DX 플랫폼'
       })
+      console.log('👤 고객 생성 응답:', customerResponse.data)
 
       if (customerResponse.data.success) {
         this.generatedCustomer = customerResponse.data.customer || customerResponse.data.data
@@ -741,9 +758,19 @@ class CustomerGenerationApp {
 
       this.hideLoading()
     } catch (error) {
-      console.error('데모 가상고객 생성 오류:', error)
+      console.error('❌ 데모 가상고객 생성 오류:', error)
+      console.error('❌ 에러 응답:', error.response?.data)
+      console.error('❌ 에러 상태:', error.response?.status)
       this.hideLoading()
-      this.showErrorMessage('데모 AI 가상고객 생성 중 오류가 발생했습니다: ' + error.message)
+      
+      let errorMessage = '데모 AI 가상고객 생성 중 오류가 발생했습니다'
+      if (error.response?.data?.error) {
+        errorMessage += ': ' + error.response.data.error
+      } else if (error.message) {
+        errorMessage += ': ' + error.message
+      }
+      
+      this.showErrorMessage(errorMessage)
     }
   }
 
