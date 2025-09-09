@@ -994,9 +994,30 @@ RFP 문서 분석을 위한 기본 정보:
     } catch (error) {
       console.error('Demo2 딥리서치 오류:', error)
       
-      // 400 에러 (API 키 문제) 처리
+      // 400 에러 (API 키 문제)일 때 fallback으로 회사명 맞춤형 데모 데이터 사용
       if (error.response && error.response.status === 400) {
-        this.showErrorMessage(`❌ 설정 문제: ${error.response.data?.error || 'OpenAI API 키가 설정되지 않았습니다'}`)
+        console.log(`🔄 Fallback: ${companyName} 맞춤형 데모 데이터로 진행`)
+        
+        try {
+          // 회사명을 반영한 데모 딥리서치 데이터 생성
+          const fallbackResponse = await axios.get('/api/demo/deep-research', {
+            params: { company_name: companyName }
+          })
+          
+          if (fallbackResponse.data.success) {
+            this.deepResearchData = fallbackResponse.data.data
+            this.displayResearchResults()
+            this.currentStep = 2
+            this.updateProgressBar()
+            this.checkGenerationReady()
+            
+            this.showSuccessMessage(`✅ ${companyName} 딥리서치 완료! (데모 모드: OpenAI API 키 설정 시 실제 AI 분석 가능)`)
+          } else {
+            throw new Error('Fallback 데이터 로드 실패')
+          }
+        } catch (fallbackError) {
+          this.showErrorMessage(`❌ 설정 문제: OpenAI API 키가 설정되지 않았습니다. 관리자에게 문의하세요.`)
+        }
       } else {
         this.showErrorMessage('AI 딥리서치 중 오류가 발생했습니다: ' + error.message)
       }

@@ -11,12 +11,25 @@ export class DemoDataService {
   
   // 1️⃣ 샘플 딥리서치 데이터 (15속성) - 회사명 동적 적용
   static getSampleDeepResearchData(companyName: string = '샘플기업'): DeepResearchData {
+    // 회사별 맞춤형 사업 영역 및 기본 정보
+    const companyProfiles = {
+      '네이버': { business: '검색, 플랫폼, AI, 클라우드 서비스', position: '국내 1위 검색포털, 글로벌 플랫폼 기업', domain: 'naver.com' },
+      '삼성전자': { business: '반도체, 스마트폰, 디스플레이, 가전', position: '글로벌 반도체 1위, 스마트폰 제조사', domain: 'samsung.com' },
+      '카카오': { business: '메신저, 플랫폼, 핀테크, 모빌리티', position: '국내 1위 메신저, 플랫폼 생태계 구축', domain: 'kakao.com' },
+      'LG전자': { business: '가전, 차량부품, 에어솔루션', position: '글로벌 가전 브랜드, 친환경 가전 선도', domain: 'lg.com' },
+      'SK하이닉스': { business: '메모리 반도체, DRAM, NAND Flash', position: '글로벌 메모리 반도체 2위', domain: 'skhynix.com' },
+      '현대자동차': { business: '자동차 제조, 전기차, 수소차', position: '글로벌 자동차 제조사, 친환경차 선도', domain: 'hyundai.com' }
+    }
+    
+    const profile = companyProfiles[companyName as keyof typeof companyProfiles] || 
+                   { business: '다양한 사업 영역', position: '업계 선도 기업', domain: 'company.com' }
+    
     return {
       1: {
         id: "1",
         name: "비전·미션",
         content: `${companyName}의 혁신과 지속가능한 성장을 추구`,
-        source_url: "https://www.kumhopetrochemical.com",
+        source_url: `https://www.${profile.domain}`,
         source_type: "homepage",
         reliability_score: 9,
         llm_confidence: 0.95,
@@ -25,8 +38,8 @@ export class DemoDataService {
       2: {
         id: "2", 
         name: "핵심 사업영역",
-        content: "합성고무, 합성수지, 페놀유도체, 정밀화학",
-        source_url: "https://www.kumhopetrochemical.com/ir",
+        content: profile.business,
+        source_url: `https://www.${profile.domain}/ir`,
         source_type: "ir_document",
         reliability_score: 10,
         llm_confidence: 0.98,
@@ -35,8 +48,8 @@ export class DemoDataService {
       3: {
         id: "3",
         name: "시장 포지셔닝", 
-        content: "글로벌 Top5 합성고무 업체, 고부가가치 중심",
-        source_url: "analyst_report_2024.pdf",
+        content: profile.position,
+        source_url: `${companyName}_analyst_report_2024.pdf`,
         source_type: "press_release",
         reliability_score: 8,
         llm_confidence: 0.87,

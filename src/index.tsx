@@ -621,7 +621,7 @@ app.post('/api/customers/generate', async (c) => {
       
       const customerType = department || 'CTO'
       const actualCompanyName = company_name || 
-        deep_research_data?.vision_mission?.split(' ')[0] || 
+        (deep_research_data?.["1"]?.content?.split(' ')[0]) || 
         '분석 대상 기업'
       
       customer = {
