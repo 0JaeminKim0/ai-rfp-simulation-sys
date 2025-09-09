@@ -677,10 +677,15 @@ class CustomerGenerationApp {
 
   async loadDemoCustomerGeneration() {
     try {
+      // 회사명 먼저 가져오기 (사용자 입력 또는 기본값)
+      const companyName = document.getElementById('company-name')?.value || '테스트기업'
+      
       this.showLoading('AI 가상고객 생성 데모 로딩 중...')
       
       // 1단계: 데모 딥리서치 데이터 자동 로드
-      const deepResearchResponse = await axios.get('/api/demo/deep-research')
+      const deepResearchResponse = await axios.get('/api/demo/deep-research', {
+        params: { company_name: companyName }
+      })
       if (deepResearchResponse.data.success) {
         this.deepResearchData = deepResearchResponse.data.data
         this.displayResearchResults()
