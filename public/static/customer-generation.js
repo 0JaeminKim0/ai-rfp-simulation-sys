@@ -51,14 +51,7 @@ class CustomerGenerationApp {
       this.loadDemoCustomerGeneration()
     })
 
-    // Demo2 가상고객 생성 (LLM 사용)
-    document.getElementById('demo2-generate-customer')?.addEventListener('click', () => {
-      this.startDemo2CustomerGeneration()
-    })
-
-    document.getElementById('demo2-generate-customer')?.addEventListener('click', () => {
-      this.startDemo2CustomerGeneration()
-    })
+    // Demo2 버튼 제거됨 - 사용자 요청에 따라 2개 버튼만 유지
 
     // 드래그 앤 드롭 지원
     this.setupDragDrop()

@@ -2777,28 +2777,18 @@ app.get('/customer-generation', (c) => {
 
                 <div class="pwc-text-center">
                     <div class="pwc-flex pwc-flex-center pwc-flex-mobile-col" style="gap: var(--spacing-md);">
-                        <button id="generate-customer" class="pwc-btn pwc-btn-primary pwc-btn-lg" style="width: 100%; max-width: 300px;" disabled>
+                        <button id="generate-customer" class="pwc-btn pwc-btn-primary pwc-btn-lg" style="width: 100%; max-width: 350px;" disabled>
                             <i class="fas fa-magic"></i>
-                            AI 가상고객 생성
+                            AI 고객 생성
                         </button>
-                        <button id="demo-generate-customer" class="pwc-btn pwc-btn-secondary pwc-btn-lg" style="width: 100%; max-width: 300px;">
+                        <button id="demo-generate-customer" class="pwc-btn pwc-btn-secondary pwc-btn-lg" style="width: 100%; max-width: 350px;">
                             <i class="fas fa-rocket"></i>
-                            AI 가상고객 생성 데모
-                        </button>
-                        <button id="demo2-generate-customer" class="pwc-btn pwc-btn-lg" style="background: linear-gradient(135deg, var(--pwc-navy), #003366); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(0, 51, 102, 0.3); transition: all 0.3s ease; width: 100%; max-width: 300px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 51, 102, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 51, 102, 0.3)'">
-                            <i class="fas fa-brain" style="margin-right: var(--spacing-xs);"></i>
-                            AI 고객생성 (데모 통합)
+                            AI 고객 생성 데모
                         </button>
                     </div>
                     <p style="font-size: 0.875rem; color: var(--pwc-gray-600); margin-top: var(--spacing-md);">
-                        딥리서치와 RFP 분석을 완료한 후 생성하거나 데모로 바로 체험해보세요.
+                        딥리서치와 RFP 분석을 완료한 후 AI 고객을 생성하거나 데모로 바로 체험해보세요.
                     </p>
-                    <div style="background: linear-gradient(135deg, #fff5e6, #e6f3ff); border-radius: var(--border-radius-md); padding: var(--spacing-md); margin-top: var(--spacing-md); border: 2px solid var(--pwc-orange-light);">
-                        <p style="font-size: 0.8rem; color: var(--pwc-navy); margin: 0; font-weight: 600; display: flex; align-items: center; gap: var(--spacing-xs);">
-                            <i class="fas fa-brain" style="color: var(--pwc-orange);"></i>
-                            <span>🧠 AI Demo2: 딥리서치·RFP분석은 실제 GPT-4o, 고객생성은 데이터 통합 방식</span>
-                        </p>
-                    </div>
                 </div>
 
                 <!-- 생성된 고객 결과 -->
