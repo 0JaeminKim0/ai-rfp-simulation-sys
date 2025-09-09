@@ -708,7 +708,7 @@ class CustomerGenerationApp {
 
       if (customerResponse.data.success) {
         this.generatedCustomer = customerResponse.data.customer || customerResponse.data.data
-        this.displayGeneratedCustomer()
+        this.displayCustomerCard()
         this.currentStep = 3
         this.updateProgressBar()
         
