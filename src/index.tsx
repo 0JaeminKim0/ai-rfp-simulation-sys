@@ -720,16 +720,27 @@ app.post('/api/evaluations/proposal', async (c) => {
     const { customer_id, proposal_title, proposal_content } = await c.req.json()
     const { env } = c
     
-    const storage = new JsonStorageService(env.KV)
+    console.log(`📋 실제 제안서 평가 시작: customer_id=${customer_id}`)
     
-    // AI 가상고객 로드
-    const customer = await storage.getVirtualCustomer(customer_id)
+    // Railway 환경용 고객 조회
+    let customer = null
+    for (const [key, value] of globalMemoryStore.entries()) {
+      if (key.startsWith('customer:') && value.id === customer_id) {
+        customer = value
+        break
+      }
+    }
+    
     if (!customer) {
+      console.log('❌ 고객 정보 없음')
       return c.json({
         success: false,
         error: 'AI 가상고객을 찾을 수 없습니다.'
       }, 404)
     }
+    
+    console.log(`👤 고객 발견: ${customer.company_name}`)
+    console.log(`📊 고객 속성: 딥리서치 ${Object.keys(customer.deep_research_data || {}).length}개, RFP 분석 ${Object.keys(customer.rfp_analysis_data || {}).length}개`)
     
     let proposalEvaluation
     
@@ -1730,18 +1741,45 @@ app.post('/api/demo2/generate-customer', async (c) => {
 app.post('/api/demo/evaluate-proposal', async (c) => {
   try {
     const { customer_id } = await c.req.json()
-    const db = new DatabaseService(c.env.DB)
+    
+    console.log(`📋 데모 제안서 평가 시작: customer_id=${customer_id}`)
+    
+    // 고객 데이터 조회
+    let customer = null
+    for (const [key, value] of globalMemoryStore.entries()) {
+      if (key.startsWith('customer:') && value.id === customer_id) {
+        customer = value
+        break
+      }
+    }
+    
+    if (!customer) {
+      throw new Error('고객 정보를 찾을 수 없습니다')
+    }
+    
+    console.log(`👤 고객 발견: ${customer.company_name} (30속성 포함)`)
     
     const demoProposalEval = DemoDataService.getSampleProposalEvaluation()
     demoProposalEval.customer_id = customer_id
+    demoProposalEval.id = `eval-${Date.now()}`
     
-    // 데이터베이스에 저장
-    const evaluationId = await db.saveProposalEvaluation(demoProposalEval)
+    // Railway 환경에서는 메모리에만 저장
+    const evaluationKey = `evaluation:${demoProposalEval.id}`
+    globalMemoryStore.set(evaluationKey, demoProposalEval)
+    
+    console.log(`✅ 제안서 평가 완료: ${demoProposalEval.id}`)
     
     return c.json({
       success: true,
-      data: { ...demoProposalEval, id: evaluationId },
-      message: "데모 제안서 평가가 완료되었습니다"
+      data: demoProposalEval,
+      message: "데모 제안서 평가가 완료되었습니다",
+      customer_info: {
+        company_name: customer.company_name,
+        attributes_count: {
+          deep_research: Object.keys(customer.deep_research_data || {}).length,
+          rfp_analysis: Object.keys(customer.rfp_analysis_data || {}).length
+        }
+      }
     })
   } catch (error) {
     return c.json({
