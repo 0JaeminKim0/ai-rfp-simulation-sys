@@ -6,7 +6,7 @@
     "dev:sandbox": "wrangler pages dev dist --ip 0.0.0.0 --port 3000",
     "dev:d1": "wrangler pages dev dist --d1=webapp-production --local --ip 0.0.0.0 --port 3000",
     "build": "vite build",
-    "build:railway": "npm run build",
+    "build:railway": "RAILWAY=true vite build",
     "start": "node server.js",
     "start:railway": "npm start",
     "preview": "wrangler pages dev dist",
@@ -38,13 +38,13 @@
     "node-html-parser": "^6.1.13"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250705.0",
+    "@cloudflare/workers-types": "^4.20250909.0",
     "@hono/vite-build": "^1.2.0",
     "@hono/vite-cloudflare-pages": "^0.4.2",
     "@hono/vite-dev-server": "^0.18.2",
     "typescript": "^5.9.2",
     "vite": "^6.3.5",
-    "wrangler": "^4.4.0",
+    "wrangler": "^3.78.0",
     "@types/node": "^20.0.0"
   }
 }

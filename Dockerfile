@@ -5,15 +5,20 @@ FROM node:20-alpine
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 패키지 파일 복사 및 의존성 설치
-COPY package*.json ./
-RUN npm ci --only=production
+# 패키지 파일과 .npmrc 복사
+COPY package*.json .npmrc ./
+
+# 개발 의존성 포함하여 설치 (빌드를 위해 필요)
+RUN npm install --legacy-peer-deps
 
 # 소스 코드 복사
 COPY . .
 
-# TypeScript 컴파일 및 빌드
-RUN npm run build
+# Railway 환경에서 빌드
+RUN RAILWAY=true npm run build
+
+# 프로덕션 의존성만 재설치
+RUN npm prune --production --legacy-peer-deps
 
 # 포트 노출 (Railway는 PORT 환경변수 사용)
 EXPOSE ${PORT:-3000}
