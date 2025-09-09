@@ -46,28 +46,54 @@ export class PDFGeneratorService {
       total: 0
     }
     
+    // 점수 변환 함수: 실제 평가 시스템과 동일한 로직
+    const getScoreValue = (scoreObj: any): number => {
+      // 100점 만점 점수가 있으면 사용, 없으면 1-5점을 100점으로 변환
+      if (scoreObj.score_100) {
+        return scoreObj.score_100
+      } else if (scoreObj.score) {
+        // 1-5점을 10/20/30/40/50점으로 변환 (발표 평가 방식)
+        const mapping: Record<number, number> = { 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 }
+        return mapping[Math.round(scoreObj.score)] || 0
+      }
+      return 0
+    }
+    
     if (proposalEval && presentationEval) {
+      // 제안서 70% + 발표 30% 가중 평균
       finalScores = {
-        clarity: (proposalEval.scores.clarity.score * proposalWeight) + (presentationEval.scores.clarity.score * presentationWeight),
-        expertise: (proposalEval.scores.expertise.score * proposalWeight) + (presentationEval.scores.expertise.score * presentationWeight),
-        persuasiveness: (proposalEval.scores.persuasiveness.score * proposalWeight) + (presentationEval.scores.persuasiveness.score * presentationWeight),
-        logic: (proposalEval.scores.logic.score * proposalWeight) + (presentationEval.scores.logic.score * presentationWeight),
-        creativity: (proposalEval.scores.creativity.score * proposalWeight) + (presentationEval.scores.creativity.score * presentationWeight),
-        credibility: (proposalEval.scores.credibility.score * proposalWeight) + (presentationEval.scores.credibility.score * presentationWeight),
+        clarity: (getScoreValue(proposalEval.scores.clarity) * proposalWeight) + (getScoreValue(presentationEval.scores.clarity) * presentationWeight),
+        expertise: (getScoreValue(proposalEval.scores.expertise) * proposalWeight) + (getScoreValue(presentationEval.scores.expertise) * presentationWeight),
+        persuasiveness: (getScoreValue(proposalEval.scores.persuasiveness) * proposalWeight) + (getScoreValue(presentationEval.scores.persuasiveness) * presentationWeight),
+        logic: (getScoreValue(proposalEval.scores.logic) * proposalWeight) + (getScoreValue(presentationEval.scores.logic) * presentationWeight),
+        creativity: (getScoreValue(proposalEval.scores.creativity) * proposalWeight) + (getScoreValue(presentationEval.scores.creativity) * presentationWeight),
+        credibility: (getScoreValue(proposalEval.scores.credibility) * proposalWeight) + (getScoreValue(presentationEval.scores.credibility) * presentationWeight),
         total: 0
       }
       
       finalScores.total = (finalScores.clarity + finalScores.expertise + finalScores.persuasiveness + 
                           finalScores.logic + finalScores.creativity + finalScores.credibility) / 6
     } else if (proposalEval) {
+      // 제안서만 있는 경우 - 실제 총점 사용 (60-100점 범위)
       finalScores = {
-        clarity: proposalEval.scores.clarity.score,
-        expertise: proposalEval.scores.expertise.score,
-        persuasiveness: proposalEval.scores.persuasiveness.score,
-        logic: proposalEval.scores.logic.score,
-        creativity: proposalEval.scores.creativity.score,
-        credibility: proposalEval.scores.credibility.score,
-        total: proposalEval.total_score
+        clarity: getScoreValue(proposalEval.scores.clarity),
+        expertise: getScoreValue(proposalEval.scores.expertise),
+        persuasiveness: getScoreValue(proposalEval.scores.persuasiveness),
+        logic: getScoreValue(proposalEval.scores.logic),
+        creativity: getScoreValue(proposalEval.scores.creativity),
+        credibility: getScoreValue(proposalEval.scores.credibility),
+        total: proposalEval.total_score || 0  // 실제 가중치 계산된 총점 (60-100점)
+      }
+    } else if (presentationEval) {
+      // 발표만 있는 경우
+      finalScores = {
+        clarity: getScoreValue(presentationEval.scores.clarity),
+        expertise: getScoreValue(presentationEval.scores.expertise),
+        persuasiveness: getScoreValue(presentationEval.scores.persuasiveness),
+        logic: getScoreValue(presentationEval.scores.logic),
+        creativity: getScoreValue(presentationEval.scores.creativity),
+        credibility: getScoreValue(presentationEval.scores.credibility),
+        total: presentationEval.total_score || 0
       }
     }
     
@@ -323,8 +349,8 @@ export class PDFGeneratorService {
         </div>
 
         <div class="final-score">
-            <div class="score">${finalScores.total.toFixed(2)}</div>
-            <div>최종 종합 점수 (5점 만점)</div>
+            <div class="score">${finalScores.total.toFixed(1)}</div>
+            <div>최종 종합 점수 (100점 만점)</div>
         </div>
     </div>
 
@@ -388,49 +414,98 @@ export class PDFGeneratorService {
     `.trim()
   }
 
-  // 피드백 생성
+  // 피드백 생성 (100점 만점 기준 + 실제 AI 평가 코멘트 활용)
   private generateFeedback(
     finalScores: any, 
     proposalEval?: ProposalEvaluation,
     presentationEval?: PresentationEvaluation
   ): { strengths: string; improvements: string; summary: string } {
     
-    // 강점 분석
-    const strengths = []
-    if (finalScores.expertise >= 4.5) strengths.push('전문성이 매우 뛰어남')
-    if (finalScores.credibility >= 4.5) strengths.push('높은 신뢰성과 실현가능성')
-    if (finalScores.clarity >= 4.0) strengths.push('명확하고 체계적인 구성')
-    if (finalScores.logic >= 4.0) strengths.push('논리적이고 체계적인 접근')
-    
-    if (strengths.length === 0) {
-      strengths.push('기본적인 요구사항을 충족하는 수준')
+    // 실제 AI 평가 코멘트에서 강점과 개선점 추출
+    const aiComments = {
+      strengths: [] as string[],
+      improvements: [] as string[],
+      summary: ''
     }
-
-    // 개선사항 분석  
-    const improvements = []
-    if (finalScores.creativity < 3.5) improvements.push('더욱 창의적이고 차별화된 접근 필요')
-    if (finalScores.clarity < 3.5) improvements.push('메시지 전달의 명확성 개선 필요')
-    if (finalScores.persuasiveness < 3.5) improvements.push('고객 관점에서의 설득력 강화 필요')
     
-    if (improvements.length === 0) {
-      improvements.push('전반적으로 우수한 수준이며, 세부적인 완성도 향상 권장')
+    // 제안서 AI 평가 코멘트 분석
+    if (proposalEval && proposalEval.evaluation_method === 'llm') {
+      if (proposalEval.overall_feedback) {
+        aiComments.summary = proposalEval.overall_feedback
+      }
+      if (proposalEval.key_strengths) {
+        if (Array.isArray(proposalEval.key_strengths)) {
+          aiComments.strengths.push(...proposalEval.key_strengths)
+        } else if (typeof proposalEval.key_strengths === 'string') {
+          aiComments.strengths.push(proposalEval.key_strengths)
+        }
+      }
+      if (proposalEval.improvement_areas) {
+        if (Array.isArray(proposalEval.improvement_areas)) {
+          aiComments.improvements.push(...proposalEval.improvement_areas)
+        } else if (typeof proposalEval.improvement_areas === 'string') {
+          aiComments.improvements.push(proposalEval.improvement_areas)
+        }
+      }
     }
-
-    // 총평
-    let summary = ''
-    if (finalScores.total >= 4.5) {
-      summary = '매우 우수한 제안으로 고객의 요구사항을 정확히 파악하고 전문적인 해결방안을 제시했습니다.'
-    } else if (finalScores.total >= 4.0) {
-      summary = '전반적으로 우수한 제안이며, 고객의 니즈를 잘 이해하고 적절한 솔루션을 제안했습니다.'
-    } else if (finalScores.total >= 3.5) {
-      summary = '기본적인 요구사항은 충족하나, 일부 영역에서 추가적인 보완이 필요합니다.'
+    
+    // 발표 AI 평가 코멘트 분석
+    if (presentationEval && presentationEval.evaluation_method === 'llm') {
+      if (presentationEval.overall_feedback && !aiComments.summary) {
+        aiComments.summary = presentationEval.overall_feedback
+      }
+    }
+    
+    // AI 평가 코멘트가 있으면 우선 사용, 없으면 점수 기반 피드백 생성
+    let strengths: string[]
+    let improvements: string[]
+    let summary: string
+    
+    if (aiComments.strengths.length > 0 || aiComments.improvements.length > 0 || aiComments.summary) {
+      // AI 평가 코멘트 사용
+      strengths = aiComments.strengths.length > 0 ? aiComments.strengths : ['AI가 분석한 전문적인 내용 구성']
+      improvements = aiComments.improvements.length > 0 ? aiComments.improvements : ['AI 분석 기반 추가 개선 방향 권장']
+      summary = aiComments.summary || '고객 페르소나에 기반한 AI 분석 결과입니다.'
     } else {
-      summary = '기본 수준의 제안이며, 여러 영역에서 개선이 필요합니다.'
+      // 점수 기반 피드백 생성 (100점 만점 기준)
+      strengths = []
+      if (finalScores.expertise >= 45) strengths.push('전문성이 매우 뛰어남')
+      if (finalScores.credibility >= 45) strengths.push('높은 신뢰성과 실현가능성')
+      if (finalScores.clarity >= 40) strengths.push('명확하고 체계적인 구성')
+      if (finalScores.logic >= 40) strengths.push('논리적이고 체계적인 접근')
+      if (finalScores.persuasiveness >= 40) strengths.push('설득력 있는 가치 제안')
+      
+      if (strengths.length === 0) {
+        strengths.push('기본적인 요구사항을 충족하는 수준')
+      }
+
+      // 개선사항 분석 (100점 만점 기준)
+      improvements = []
+      if (finalScores.creativity < 35) improvements.push('더욱 창의적이고 차별화된 접근 필요')
+      if (finalScores.clarity < 35) improvements.push('메시지 전달의 명확성 개선 필요')
+      if (finalScores.persuasiveness < 35) improvements.push('고객 관점에서의 설득력 강화 필요')
+      if (finalScores.expertise < 40) improvements.push('전문성과 도메인 지식 보강 필요')
+      if (finalScores.logic < 40) improvements.push('논리적 구성과 근거 보완 필요')
+      
+      if (improvements.length === 0) {
+        improvements.push('전반적으로 우수한 수준이며, 세부적인 완성도 향상 권장')
+      }
+
+      // 총평 (100점 만점 기준)
+      if (finalScores.total >= 80) {
+        summary = '매우 우수한 제안으로 고객의 요구사항을 정확히 파악하고 전문적인 해결방안을 제시했습니다.'
+      } else if (finalScores.total >= 70) {
+        summary = '전반적으로 우수한 제안이며, 고객의 니즈를 잘 이해하고 적절한 솔루션을 제안했습니다.'
+      } else if (finalScores.total >= 60) {
+        summary = '기본적인 요구사항은 충족하나, 일부 영역에서 추가적인 보완이 필요합니다.'
+      } else {
+        summary = '기본 수준의 제안이며, 여러 영역에서 개선이 필요합니다.'
+      }
     }
 
     return {
-      strengths: strengths.join(', '),
-      improvements: improvements.join(', '),
+      strengths: Array.isArray(strengths) ? strengths.join(', ') : strengths,
+      improvements: Array.isArray(improvements) ? improvements.join(', ') : improvements,
       summary: summary
     }
   }

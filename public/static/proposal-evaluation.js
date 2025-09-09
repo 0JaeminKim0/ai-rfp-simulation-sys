@@ -487,6 +487,90 @@ class ProposalEvaluationApp {
       }, 300)
     }, 3000)
   }
+  
+  addPdfDownloadButton() {
+    // 기존 버튼이 있으면 제거
+    const existingButton = document.getElementById('pdf-download-btn')
+    if (existingButton) {
+      existingButton.remove()
+    }
+    
+    // PDF 다운로드 버튼 생성
+    const downloadButton = document.createElement('button')
+    downloadButton.id = 'pdf-download-btn'
+    downloadButton.className = 'btn btn-outline-primary mt-3'
+    downloadButton.innerHTML = '<i class="fas fa-file-pdf mr-2"></i>PDF 리포트 다운로드'
+    downloadButton.onclick = () => this.downloadPdfReport()
+    
+    // 총점 표시 섹션 다음에 추가
+    const totalScoreElement = document.getElementById('total-score')
+    if (totalScoreElement && totalScoreElement.parentElement) {
+      totalScoreElement.parentElement.insertAdjacentElement('afterend', downloadButton)
+    }
+  }
+  
+  async downloadPdfReport() {
+    try {
+      // 로딩 표시
+      const button = document.getElementById('pdf-download-btn')
+      const originalText = button.innerHTML
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>리포트 생성 중...'
+      button.disabled = true
+      
+      // PDF 리포트 생성 API 호출
+      const requestData = {
+        customer_id: this.selectedCustomer?.id,
+        proposal_evaluation_id: this.evaluationResult?.id
+      }
+      
+      const response = await fetch('/api/report/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // HTML 리포트를 새 창에서 열기 (인쇄용)
+        const newWindow = window.open('', '_blank')
+        newWindow.document.write(result.data.html_content)
+        newWindow.document.close()
+        
+        // 자동으로 인쇄 대화상자 열기
+        newWindow.onload = function() {
+          newWindow.print()
+        }
+        
+        // 다운로드 링크 생성 (HTML 파일로)
+        const blob = new Blob([result.data.html_content], { type: 'text/html' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = result.data.download_filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        
+        this.showSuccess('PDF 리포트가 성공적으로 생성되었습니다!')
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('PDF 리포트 생성 오류:', error)
+      this.showError('PDF 리포트 생성 중 오류가 발생했습니다: ' + error.message)
+    } finally {
+      // 버튼 상태 복원
+      const button = document.getElementById('pdf-download-btn')
+      if (button) {
+        button.innerHTML = '<i class="fas fa-file-pdf mr-2"></i>PDF 리포트 다운로드'
+        button.disabled = false
+      }
+    }
+  }
 }
 
 // 앱 초기화

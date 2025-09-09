@@ -2248,33 +2248,74 @@ app.post('/api/parse/proposal', async (c) => {
 
 // === PDF 리포트 생성 API ===
 
-// PDF 리포트 생성
+// PDF 리포트 생성 (메모리 저장소 사용)
 app.post('/api/report/generate', async (c) => {
   try {
     const { customer_id, proposal_evaluation_id, presentation_evaluation_id } = await c.req.json()
     
-    const db = new DatabaseService(c.env.DB)
     const pdfGenerator = new PDFGeneratorService()
+    
+    console.log(`📄 PDF 리포트 생성 요청: customer_id=${customer_id}`);
 
-    // 고객 정보 조회
-    const customer = await db.getCustomerById(customer_id)
+    // 메모리 저장소에서 고객 정보 조회
+    let customer = null
+    for (const [key, value] of globalMemoryStore.entries()) {
+      if (key.startsWith('customer:') && (value.id === customer_id || value.customer_id === customer_id)) {
+        customer = value
+        console.log(`👤 고객 발견: ${customer.company_name}`);
+        break
+      }
+    }
+    
     if (!customer) {
+      console.log('❌ 고객 정보 없음');
       return c.json({
         success: false,
         error: 'AI 가상고객을 찾을 수 없습니다.'
       }, 404)
     }
 
-    // 평가 정보 조회
+    // 메모리 저장소에서 평가 정보 조회
     let proposalEval = null
     let presentationEval = null
     
     if (proposal_evaluation_id) {
-      proposalEval = await db.getProposalEvaluation(proposal_evaluation_id)
+      const evalKey = `evaluation:${proposal_evaluation_id}`
+      proposalEval = globalMemoryStore.get(evalKey)
+      if (proposalEval) {
+        console.log(`📊 제안서 평가 발견: ${proposalEval.proposal_title}`);
+      }
     }
     
     if (presentation_evaluation_id) {
-      presentationEval = await db.getPresentationEvaluation(presentation_evaluation_id)
+      const evalKey = `presentation:${presentation_evaluation_id}`
+      presentationEval = globalMemoryStore.get(evalKey)
+      if (presentationEval) {
+        console.log(`🎤 발표 평가 발견: ${presentationEval.presentation_title}`);
+      }
+    }
+    
+    // 평가 데이터가 없으면 최신 평가 데이터 자동 검색
+    if (!proposalEval && !presentationEval) {
+      console.log('🔍 평가 데이터 자동 검색 중...');
+      
+      // 해당 고객의 최신 제안서 평가 찾기
+      for (const [key, value] of globalMemoryStore.entries()) {
+        if (key.startsWith('evaluation:') && value.customer_id === customer_id) {
+          proposalEval = value
+          console.log(`📊 자동 발견된 제안서 평가: ${proposalEval.proposal_title}`);
+          break
+        }
+      }
+      
+      // 해당 고객의 최신 발표 평가 찾기
+      for (const [key, value] of globalMemoryStore.entries()) {
+        if (key.startsWith('presentation:') && value.customer_id === customer_id) {
+          presentationEval = value
+          console.log(`🎤 자동 발견된 발표 평가: ${presentationEval.presentation_title}`);
+          break
+        }
+      }
     }
 
     // 리포트 데이터 생성
@@ -2283,12 +2324,14 @@ app.post('/api/report/generate', async (c) => {
     // HTML 리포트 생성
     const htmlReport = pdfGenerator.generateHTMLReport(reportData)
 
+    console.log('✅ PDF 리포트 생성 완료');
+    
     return c.json({
       success: true,
       data: {
         report_data: reportData,
         html_content: htmlReport,
-        download_filename: `RFP평가리포트_${customer.name}_${new Date().toISOString().split('T')[0]}.html`
+        download_filename: `RFP평가리포트_${customer.name || customer.company_name}_${new Date().toISOString().split('T')[0]}.html`
       },
       message: 'PDF 리포트가 성공적으로 생성되었습니다.'
     })
@@ -2307,10 +2350,11 @@ app.get('/api/report/demo', async (c) => {
   try {
     const pdfGenerator = new PDFGeneratorService()
     
-    // 데모 데이터 사용
-    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer()
-    const demoProposalEval = DemoDataService.getSampleProposalEvaluation()
-    const demoPresentationEval = DemoDataService.getSamplePresentationEvaluation()
+    // 데모 데이터 사용 - 실제 회사명으로 변경
+    const demoCompanyName = '금고석유화학'  // 실제 데모에서 사용하는 회사명
+    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer(demoCompanyName)
+    const demoProposalEval = DemoDataService.getSampleProposalEvaluation(demoCompanyName)
+    const demoPresentationEval = DemoDataService.getSamplePresentationEvaluation(demoCompanyName)
     
     // 리포트 생성
     const reportData = pdfGenerator.generateReportData(demoCustomer, demoProposalEval, demoPresentationEval)

@@ -18,7 +18,8 @@ export class DemoDataService {
       '카카오': { business: '메신저, 플랫폼, 핀테크, 모빌리티', position: '국내 1위 메신저, 플랫폼 생태계 구축', domain: 'kakao.com' },
       'LG전자': { business: '가전, 차량부품, 에어솔루션', position: '글로벌 가전 브랜드, 친환경 가전 선도', domain: 'lg.com' },
       'SK하이닉스': { business: '메모리 반도체, DRAM, NAND Flash', position: '글로벌 메모리 반도체 2위', domain: 'skhynix.com' },
-      '현대자동차': { business: '자동차 제조, 전기차, 수소차', position: '글로벌 자동차 제조사, 친환경차 선도', domain: 'hyundai.com' }
+      '현대자동차': { business: '자동차 제조, 전기차, 수소차', position: '글로벌 자동차 제조사, 친환경차 선도', domain: 'hyundai.com' },
+      '금고석유화학': { business: 'C4 화학제품, 합성수지, 특수화학', position: '국내 C4 화학 선도기업, 친환경 소재 개발', domain: 'kkpc.com' }
     }
     
     const profile = companyProfiles[companyName as keyof typeof companyProfiles] || 
@@ -359,7 +360,7 @@ export class DemoDataService {
   }
 
   // 4️⃣ 샘플 제안서 평가 결과
-  static getSampleProposalEvaluation(): ProposalEvaluation {
+  static getSampleProposalEvaluation(companyName: string = '금고석유화학'): ProposalEvaluation {
     return {
       id: "demo-proposal-eval-2025",
       customer_id: "demo-customer-kumho-2025", 
@@ -414,7 +415,7 @@ export class DemoDataService {
   }
 
   // 5️⃣ 샘플 발표 평가 결과 
-  static getSamplePresentationEvaluation(): PresentationEvaluation {
+  static getSamplePresentationEvaluation(companyName: string = '금고석유화학'): PresentationEvaluation {
     return {
       id: "demo-presentation-eval-2025",
       customer_id: "demo-customer-kumho-2025",
