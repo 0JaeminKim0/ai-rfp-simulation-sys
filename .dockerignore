@@ -1,0 +1,40 @@
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Railway
+.railway/
+
+# Cloudflare
+.wrangler/
+wrangler.toml
+wrangler.jsonc
+
+# Development files
+.env
+.env.local
+.dev.vars
+*.log
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts (will be rebuilt in container)
+dist/
+
+# PM2
+.pm2/
+ecosystem.config.*
+
+# Documentation
+README.md
+docs/

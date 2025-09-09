@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-rfp-simulator",
+  "compatibility_date": "2025-09-03",
+  "pages_build_output_dir": "./dist",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-rfp-simulator-db", 
+      "database_id": "e60eb4f4-db4c-462b-9618-6f5be9202b40"
+    }
+  ],
+  
+  // Workers Unbound 환경 변수
+  "vars": {
+    "WORKERS_UNBOUND": "true",
+    "MAX_CPU_TIME": "30000"
+  }
+}

@@ -1,0 +1,307 @@
+/* RFP 등록·파싱 페이지 전용 스타일 */
+
+/* 진행 단계 표시 */
+.step-circle {
+    @apply w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold transition-all duration-300;
+    background-color: #d1d5db; /* gray-300 */
+}
+
+.step-circle.active {
+    background-color: #ff6b1a; /* pwc-orange */
+    transform: scale(1.1);
+}
+
+.step-circle.completed {
+    background-color: #10b981; /* green-500 */
+}
+
+.step-line {
+    @apply flex-1 h-1 mx-4 transition-all duration-500;
+    background-color: #d1d5db; /* gray-300 */
+}
+
+.step-line.active {
+    background-color: #ff6b1a; /* pwc-orange */
+}
+
+.step-line.completed {
+    background-color: #10b981; /* green-500 */
+}
+
+/* 파일 드래그 앤 드롭 영역 */
+#drop-zone {
+    transition: all 0.3s ease;
+}
+
+#drop-zone.drag-over {
+    @apply border-pwc-orange bg-orange-50 transform scale-105;
+}
+
+#drop-zone:hover {
+    @apply border-pwc-orange;
+}
+
+/* 업로드 진행률 바 */
+#progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* 업로드된 파일 카드 */
+.uploaded-file-card {
+    @apply bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-shadow;
+}
+
+.file-info {
+    @apply flex items-center space-x-3;
+}
+
+.file-icon {
+    @apply w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold;
+}
+
+.file-icon.pdf {
+    @apply bg-red-500;
+}
+
+.file-icon.doc {
+    @apply bg-blue-500;
+}
+
+.file-icon.txt {
+    @apply bg-gray-500;
+}
+
+.file-details h4 {
+    @apply font-medium text-gray-800 truncate max-w-xs;
+}
+
+.file-details p {
+    @apply text-sm text-gray-600;
+}
+
+.file-actions {
+    @apply flex space-x-2;
+}
+
+.file-actions button {
+    @apply px-3 py-1 text-sm rounded transition-colors;
+}
+
+.btn-analyze {
+    @apply bg-pwc-orange text-white hover:bg-orange-600;
+}
+
+.btn-delete {
+    @apply bg-red-500 text-white hover:bg-red-600;
+}
+
+/* 분석 결과 섹션 */
+.analysis-section {
+    @apply mb-6;
+}
+
+.analysis-card {
+    @apply bg-gray-50 border border-gray-200 rounded-lg p-4;
+}
+
+.analysis-card h3 {
+    @apply text-md font-semibold text-gray-800 mb-3 flex items-center;
+}
+
+.analysis-card .content {
+    @apply text-gray-700 text-sm;
+}
+
+.analysis-card .content ul {
+    @apply list-disc list-inside space-y-1;
+}
+
+.analysis-card .content li {
+    @apply text-sm text-gray-600;
+}
+
+/* 페르소나 업데이트 결과 */
+.persona-update-result {
+    @apply bg-blue-50 border border-blue-200 rounded-lg p-4;
+}
+
+.persona-update-item {
+    @apply flex items-center justify-between py-2 border-b border-blue-200 last:border-b-0;
+}
+
+.persona-update-item .persona-name {
+    @apply font-medium text-blue-800;
+}
+
+.persona-update-item .updated-fields {
+    @apply text-sm text-blue-600;
+}
+
+/* 로딩 상태 */
+.loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-pwc-orange;
+}
+
+.loading-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+}
+
+.loading-content {
+    @apply bg-white rounded-lg p-6 shadow-xl flex items-center space-x-3;
+}
+
+/* 상태 배지 */
+.status-badge {
+    @apply px-2 py-1 text-xs font-medium rounded-full;
+}
+
+.status-badge.uploaded {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.status-badge.analyzing {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-badge.analyzed {
+    @apply bg-green-100 text-green-800;
+}
+
+.status-badge.failed {
+    @apply bg-red-100 text-red-800;
+}
+
+.status-badge.completed {
+    @apply bg-purple-100 text-purple-800;
+}
+
+/* 애니메이션 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 파일 타입별 아이콘 색상 */
+.file-type-pdf {
+    @apply text-red-600;
+}
+
+.file-type-doc {
+    @apply text-blue-600;
+}
+
+.file-type-docx {
+    @apply text-blue-600;
+}
+
+.file-type-txt {
+    @apply text-gray-600;
+}
+
+/* 드래그 오버 효과 */
+.drag-over {
+    @apply border-2 border-dashed border-pwc-orange bg-orange-50;
+    transform: scale(1.02);
+}
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+    .step-circle {
+        @apply w-10 h-10 text-sm;
+    }
+    
+    .step-line {
+        @apply mx-2;
+    }
+    
+    .file-details h4 {
+        @apply max-w-[200px];
+    }
+    
+    .file-actions {
+        @apply flex-col space-x-0 space-y-1;
+    }
+}
+
+/* 진행 상태 표시 */
+.progress-indicator {
+    @apply flex items-center space-x-2 text-sm text-gray-600;
+}
+
+.progress-dot {
+    @apply w-2 h-2 rounded-full;
+}
+
+.progress-dot.active {
+    @apply bg-pwc-orange;
+}
+
+.progress-dot.completed {
+    @apply bg-green-500;
+}
+
+.progress-dot.pending {
+    @apply bg-gray-300;
+}
+
+/* 툴팁 스타일 */
+.tooltip {
+    @apply invisible opacity-0 absolute z-10 px-3 py-2 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-sm transition-opacity duration-300;
+}
+
+.tooltip-trigger:hover .tooltip {
+    @apply visible opacity-100;
+}
+
+/* 분석 결과 차트 영역 */
+.analysis-chart-container {
+    @apply bg-white rounded-lg border border-gray-200 p-4 shadow-sm;
+}
+
+.chart-placeholder {
+    @apply h-64 flex items-center justify-center text-gray-500 bg-gray-50 rounded border-2 border-dashed border-gray-300;
+}
+
+/* 성공/에러 메시지 */
+.alert {
+    @apply p-4 rounded-lg border;
+}
+
+.alert.success {
+    @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.alert.error {
+    @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.alert.warning {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.alert.info {
+    @apply bg-blue-50 border-blue-200 text-blue-800;
+}
