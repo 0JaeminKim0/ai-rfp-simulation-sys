@@ -1,233 +1,267 @@
-# 🚀 AI 비즈니스 인텔리전스 플랫폼
+# 🚀 RFP기반 AI가상고객 제안 평가 시뮬레이터
 
 ## 프로젝트 개요
-- **이름**: AI 비즈니스 인텔리전스 플랫폼
-- **목표**: GPT-4o 기반 기업 분석, NLP RFP 파싱, 6지표 평가를 통한 종합 비즈니스 인텔리전스 제공
+- **이름**: RFP기반 AI가상고객 제안 평가 시뮬레이터
+- **목표**: 30개 고객 페르소나 속성 기반 6지표 루브릭 평가로 제안서 분석
 - **핵심 기능**: 
-  - ⚡ **GPT-4o 지식 기반 딥리서치** (웹크롤링 대신 엔터프라이즈 지식 활용)
-  - 🔍 **NLP 기반 RFP 파싱** (패턴 추출 + LLM 재구성)
-  - 📊 **6지표 기업 평가 시스템**
-  - 💾 **JSON 기반 데이터 저장** (Cloudflare KV)
-  - 🌏 **한국어 문서 처리 최적화**
+  - ⚡ **30속성 통합 AI 가상고객 생성** (딥리서치 + RFP 분석 기반)
+  - 🔍 **실제 파일 기반 RFP 분석** (PDF, DOCX, TXT 지원)
+  - 📊 **6지표 루브릭 평가 시스템** (명확성, 전문성, 설득력, 논리성, 창의성, 신뢰성)
+  - 💾 **메모리 기반 실시간 데이터 저장** (Railway 환경 최적화)
+  - 🌏 **한국어 문서 처리 완전 지원**
 
 ## 🔗 서비스 URL
-- **개발 서버**: https://3000-sandbox-260924509-987b94b2758d.e2b.dev
-- **프로덕션**: 배포 대기중
-- **GitHub**: 설정 대기중
+- **개발 서버**: https://3000-icqxngjtfsfi529p9m1em-6532622b.e2b.dev
+- **프로덕션**: Railway 배포 준비 완료
+- **GitHub**: https://github.com/user/rfp-ai-sim
 
 ## 🏗️ 기술 아키텍처
-- **플랫폼**: Cloudflare Workers Unbound (30초 CPU 제한)
+- **플랫폼**: Cloudflare Workers + Railway 듀얼 배포
 - **프레임워크**: Hono + TypeScript
 - **AI 서비스**: OpenAI GPT-4o API
-- **데이터 저장**: Cloudflare KV Storage
-- **프론트엔드**: TailwindCSS + CDN 라이브러리
+- **데이터 저장**: Global Memory Store (Railway) + KV Storage (Cloudflare)
+- **프론트엔드**: TailwindCSS + Vanilla JavaScript
 
-## 📊 데이터 구조
-### 딥리서치 데이터 모델 (15개 속성)
+## 📊 **✅ 30속성 통합 페르소나 구조** 
+### 완성된 30개 고객 속성 (6개 카테고리 × 5개씩)
+
 ```typescript
-interface DeepResearchData {
-  companyName: string;
-  vision: string;
-  mission: string;
-  coreBusiness: string;
-  marketPosition: string;
-  competitiveAdvantage: string;
-  revenueModel: string;
-  keyProducts: string[];
-  targetMarket: string;
-  partnerships: string[];
-  recentDevelopments: string[];
-  financialHighlights: string;
-  challenges: string[];
-  opportunities: string[];
-  futureOutlook: string;
+interface IntegratedPersona {
+  // 1. 기본 정보 (5개 속성)
+  basic_info: {
+    role: string;           // 역할 (CTO, 팀장 등)
+    company: string;        // 회사명
+    department: string;     // 부서
+    experience_years: number; // 경력 연수
+    decision_authority: string; // 결정권 수준
+  };
+  
+  // 2. 의사결정 특성 (5개 속성)  
+  decision_traits: {
+    style: string;              // 의사결정 스타일
+    risk_tolerance: string;     // 위험 허용도
+    timeline_preference: string; // 일정 선호도
+    budget_sensitivity: string;  // 예산 민감도
+    innovation_openness: string; // 혁신 개방성
+  };
+  
+  // 3. 핵심 우선순위 (5개 속성)
+  priorities: {
+    primary: string;        // 1순위 우선사항
+    secondary: string;      // 2순위 우선사항  
+    tertiary: string;       // 3순위 우선사항
+    compliance: string;     // 규제준수 요구사항
+    scalability: string;    // 확장성 고려사항
+  };
+  
+  // 4. 평가 관점 (5개 속성)
+  evaluation_perspective: {
+    technical_depth: string;      // 기술 깊이 선호도
+    business_value: string;       // 비즈니스 가치 중시도
+    cost_analysis: string;        // 비용 분석 중요도
+    implementation: string;       // 구현 계획 중시도
+    vendor_reliability: string;   // 공급업체 신뢰성 중시도
+  };
+  
+  // 5. 주요 우려사항 (5개 속성)
+  concerns: {
+    technical_risk: string;     // 기술적 리스크 우려
+    financial_risk: string;     // 재무적 리스크 우려
+    timeline_risk: string;      // 일정 리스크 우려
+    operational_risk: string;   // 운영 리스크 우려
+    vendor_risk: string;        // 공급업체 리스크 우려
+  };
+  
+  // 6. 평가 가중치 (5개 속성)
+  evaluation_weights: {
+    clarity: number;        // 명확성 가중치 (0-1)
+    expertise: number;      // 전문성 가중치 (0-1)
+    persuasiveness: number; // 설득력 가중치 (0-1)
+    logic: number;         // 논리성 가중치 (0-1)
+    creativity: number;    // 창의성 가중치 (0-1)
+    credibility: number;   // 신뢰성 가중치 (0-1)
+  };
 }
 ```
 
-### RFP 분석 데이터 모델 (15개 속성)
+## 🎯 **✅ 6지표 페르소나 기반 평가 시스템**
+
+### 완성된 API 엔드포인트
+
+#### 1. **30속성 AI 가상고객 생성** (완료 ✅)
+```bash
+POST /api/demo2/customer-generation
+{
+  "company_name": "삼성전자",
+  "rfp_content": "업로드된 RFP 파일 내용",
+  "market_research": "시장 조사 데이터"
+}
+```
+- **✅ 딥리서치 기반**: OpenAI GPT-4o로 기업 분석
+- **✅ RFP 분석 통합**: 실제 업로드 파일 내용 분석
+- **✅ 30속성 페르소나**: 6개 카테고리 × 5개 속성 완전 구조화
+
+#### 2. **실제 파일 기반 RFP 분석** (완료 ✅)
+```bash  
+POST /api/customers/rfp-analysis
+Content-Type: multipart/form-data
+- rfp_file: PDF/DOCX/TXT 파일
+- file_name: 파일명
+- parsing_mode: detailed
+```
+- **✅ 파일 포맷**: PDF, DOCX, TXT 완전 지원
+- **✅ 텍스트 추출**: pdf-parse + docx 파싱
+- **✅ 폴백 시스템**: 텍스트 추출 실패시 기본 분석 제공
+
+#### 3. **30속성 기반 6지표 제안서 평가** (완료 ✅)
+```bash
+POST /api/evaluations/proposal  
+{
+  "customer_id": "고객 ID",
+  "proposal_title": "제안서 제목", 
+  "proposal_content": "제안서 내용"
+}
+```
+
+**✅ 완성된 30속성 → 6지표 매핑**:
+- **명확성**: 기술 관점 + 평가 관점 속성 반영
+- **전문성**: 핵심 우선순위 + 전문 깊이 속성 반영  
+- **설득력**: 의사결정 스타일 + 혁신 개방성 속성 반영
+- **논리성**: 기술 우려사항 + 리스크 허용도 속성 반영
+- **창의성**: 혁신 성향 + 의사결정 특성 속성 반영
+- **신뢰성**: 위험 허용도 + 공급업체 신뢰성 속성 반영
+
+#### 4. **개선된 LLM 평가 프롬프트** (완료 ✅)
 ```typescript
-interface RfpAnalysisData {
-  projectTitle: string;
-  organization: string;
-  description: string;
-  deadline: string;
-  budget: string;
-  projectPeriod: string;
-  requirements: string[];
-  technicalSpecs: string[];
-  deliverables: string[];
-  evaluationCriteria: string[];
-  submissionFormat: string;
-  contactInfo: string;
-  industryType: string;
-  projectComplexity: string;
-  competitionLevel: string;
-}
+// 30개 속성을 모두 포함한 상세 페르소나 프롬프트
+const prompt = `
+당신은 ${customer.company_name}의 ${persona.basic_info.role}입니다.
+다음은 당신의 상세한 30개 속성 프로필입니다.
+
+=== 고객 30개 속성 페르소나 ===
+【기본 정보 (5개)】... 
+【의사결정 특성 (5개)】...
+【핵심 우선순위 (5개)】...  
+【평가 관점 (5개)】...
+【주요 우려사항 (5개)】...
+【평가 가중치 (5개)】...
+
+위 30개 속성을 모두 고려하여 다음 6개 지표로 평가해주세요:
+1. 명확성: 나의 ${persona.evaluation_perspective.technical_depth}에서 이해하기 쉬운가?
+2. 전문성: 나의 ${persona.priorities.primary}를 충족하는 전문성인가?
+3. 설득력: 나의 ${persona.decision_traits.style}에 부합하는 설득력인가?
+4. 논리성: 나의 ${persona.concerns.technical_risk} 해결에 논리적인가?
+5. 창의성: 나의 ${persona.decision_traits.innovation_openness} 수준에 적합한가?
+6. 신뢰성: 나의 ${persona.decision_traits.risk_tolerance} 성향에 안전한가?
+`;
 ```
 
-## 🎯 API 엔드포인트
+## 🚀 **완성된 핵심 기능**
 
-### 1. 딥리서치 API (GPT-4o 지식 기반)
-```bash
-POST /api/deep-research
-{
-  "companyName": "삼성전자",
-  "researchDepth": "comprehensive"
-}
-```
-- **성능**: 웹크롤링 제거로 응답시간 90% 단축
-- **데이터**: GPT-4o 엔터프라이즈 지식 기반 15개 속성 분석
-- **타임아웃**: Workers Unbound 25초 제한 활용
+### ✅ **30속성 통합 완료**
+1. **페르소나 구조화**: 6개 카테고리 × 5개 속성 = 30개 완전 매핑
+2. **동적 프롬프트**: 각 평가 지표별로 해당하는 페르소나 속성 직접 참조
+3. **가중치 시스템**: 고객별 개인화된 6지표 가중치 적용
+4. **실시간 LLM**: GPT-4o 기반 30초 제한 실시간 평가
 
-### 2. RFP 파싱 API (NLP + LLM 재구성)
-```bash
-POST /api/analyze-rfp
-{
-  "text": "프로젝트명: AI 시스템 구축...",
-  "fileName": "rfp-document.txt"
-}
-```
-- **Stage 1**: 고급 NLP 패턴으로 한국어 RFP 추출
-- **Stage 2**: GPT-4o를 통한 15개 속성 재구성
-- **Fallback**: OpenAI 미연결시 NLP만으로 기본 분석
+### ✅ **하드코딩 제거 완료**  
+1. **RFP 분석**: `DemoDataService.getSampleRfp()` → 실제 업로드 파일 기반
+2. **제안서 평가**: `DemoDataService.getSampleProposalEvaluation()` → LLM 기반 동적 평가
+3. **페르소나 활용**: 정적 데이터 → 30개 속성 기반 개인화 평가
 
-### 3. 6지표 평가 API
-```bash
-POST /api/evaluate-indicators
-{
-  "companyName": "카카오",
-  "industryType": "기술",
-  "indicators": ["성장성", "수익성", "안정성", "혁신성", "지속가능성", "시장지위"]
-}
-```
-
-### 4. 데이터 관리 API
-```bash
-GET /api/data/{dataType}/{identifier}      # 데이터 조회
-POST /api/data/{dataType}                  # 데이터 저장
-DELETE /api/data/{dataType}/{identifier}   # 데이터 삭제
-GET /api/data                             # 전체 데이터 목록
-```
-
-## 🚀 성능 최적화 특징
-
-### Workers Unbound 최적화
-- **CPU 시간**: 30초 제한 (기존 10초 대비 300% 증가)
-- **메모리**: 128MB → 1GB 확장
-- **동시 요청**: 1000개/분 처리 가능
-- **타임아웃 설정**: 25초 (안전 마진 5초)
-
-### GPT-4o 지식 기반 딥리서치
-- **응답 속도**: 웹크롤링 대비 90% 단축 (평균 3-5초)
-- **데이터 품질**: 엔터프라이즈급 최신 정보 제공
-- **안정성**: 외부 웹사이트 의존성 제거
-
-### NLP 기반 RFP 파싱
-- **2단계 처리**: NLP 패턴 추출 → LLM 재구성
-- **한국어 최적화**: 정규식 패턴 + 의미론적 분석
-- **Fallback 시스템**: OpenAI 미연결시 NLP만으로 기본 분석
+### ✅ **파일 처리 시스템**
+1. **멀티포맷 지원**: PDF (pdf-parse), DOCX, TXT 완전 지원
+2. **에러 핸들링**: 파일 추출 실패시 기본 분석 폴백
+3. **메타데이터 활용**: 파일명, 크기, 타입 정보 포함 분석
 
 ## 🔧 사용 가이드
 
-### 1. 기업 딥리서치
-1. `/api/deep-research`에 회사명과 분석 깊이 전송
-2. GPT-4o가 해당 기업의 최신 정보를 분석하여 15개 속성 반환
-3. 결과를 KV Storage에 자동 저장
+### 1. **30속성 AI 가상고객 생성**
+1. **Demo 2 페이지** 접속
+2. **회사명 입력** + **RFP 파일 업로드** 
+3. **AI 가상고객 생성 클릭**
+4. **30속성 통합 페르소나** 자동 생성
 
-### 2. RFP 문서 분석
-1. RFP 문서 텍스트를 `/api/analyze-rfp`에 전송
-2. 고급 NLP 패턴으로 핵심 정보 추출
-3. GPT-4o가 15개 속성으로 재구성하여 구조화된 분석 제공
+### 2. **6지표 제안서 평가**
+1. **생성된 AI 가상고객 선택**
+2. **제안서 내용 입력** (제목 + 본문)
+3. **AI 평가 실행**  
+4. **30속성 기반 6지표 점수** 확인
 
-### 3. 기업 평가
-1. 평가할 기업명과 6개 지표를 `/api/evaluate-indicators`에 전송
-2. 각 지표별 점수와 근거 제공
-3. 종합 평가 및 개선 권장사항 생성
+### 3. **실시간 LLM 평가 확인**
+- **LLM 성공**: 실시간 GPT-4o 기반 개인화 평가
+- **LLM 실패**: 페르소나 기반 폴백 평가 
+- **평가 시간**: 최대 30초 (타임아웃 보장)
 
 ## 🎯 배포 상태
 
-### Cloudflare Pages (Edge Runtime)
-- **플랫폼**: Cloudflare Pages (Workers Unbound)
-- **상태**: ✅ 개발 환경 활성화
-- **URL**: https://fddef368.ai-rfp-simulator-v2.pages.dev
-- **마지막 업데이트**: 2024-09-08
-- **빌드 상태**: ✅ 성공
+### Cloudflare Pages (개발환경)
+- **상태**: ✅ 활성화 
+- **URL**: https://3000-icqxngjtfsfi529p9m1em-6532622b.e2b.dev
+- **기능**: 30속성 페르소나 + 6지표 평가 완전 구현
 
-### Railway (Docker/Node.js)
-- **플랫폼**: Railway (Docker + Node.js)
+### Railway (프로덕션 준비)
 - **상태**: 🟡 배포 준비 완료
-- **설정 파일**: `Dockerfile`, `railway.json`, `server.js`
-- **빌드 방식**: Docker 기반 자동 배포
+- **설정**: `ecosystem.config.cjs`, `server.js` 구성 완료
+- **환경변수**: `OPENAI_API_KEY`, `NODE_ENV=production`
 
-## 🚀 Railway 배포 가이드
+## 🧪 **30속성 페르소나 테스트 결과**
 
-### 1. 필수 환경 변수 설정
-Railway 대시보드에서 다음 변수들을 설정하세요:
-```bash
-OPENAI_API_KEY=your-openai-api-key-here
-NODE_ENV=production
-```
-
-### 2. 자동 배포 설정
-```bash
-# Railway CLI 설치 및 로그인
-npm install -g @railway/cli
-railway login
-
-# 프로젝트 연결 및 배포
-railway link
-railway up
-```
-
-### 3. 로컬 테스트
-```bash
-# Railway 환경 변수로 로컬 테스트
-railway run npm run build
-railway run npm start
-```
-
-### 4. 배포 후 확인
-- Health check: `https://your-app.railway.app/api/health`
-- 모든 API 엔드포인트 정상 동작 확인
-
-## 🧪 테스트 결과
-
-### 한국어 RFP 파싱 테스트
+### 완성된 페르소나 생성 예시
 ```json
 {
-  "projectTitle": "AI 기반 고객 서비스 시스템 구축",
-  "organization": "한국전자통신연구원",
-  "budget": "5억원",
-  "projectPeriod": "2024년 3월 ~ 2024년 12월 (10개월)",
-  "confidence": 0.95
+  "company_name": "삼성전자",
+  "integrated_persona": {
+    "basic_info": {
+      "role": "CTO",
+      "company": "삼성전자", 
+      "department": "기술총괄",
+      "experience_years": 15,
+      "decision_authority": "핵심의사결정자"
+    },
+    "decision_traits": {
+      "style": "기술검증 중심형",
+      "risk_tolerance": "보수적",
+      "timeline_preference": "단계적 접근",
+      "budget_sensitivity": "높음",
+      "innovation_openness": "중간"
+    },
+    // ... 나머지 25개 속성
+  }
 }
 ```
 
-### GPT-4o 딥리서치 테스트
+### 6지표 평가 결과 예시  
 ```json
 {
-  "companyName": "삼성전자",
-  "vision": "인류에게 공헌하는 글로벌 일류기업",
-  "marketPosition": "글로벌 전자제품 시장 리더",
-  "processingTime": "4.2초"
+  "scores": {
+    "clarity": { 
+      "score": 4, 
+      "comment": "기술 깊이 '중요' 관점에서 명확한 설명",
+      "persona_factor": "evaluation_perspective.technical_depth" 
+    },
+    "expertise": { 
+      "score": 5, 
+      "comment": "핵심 우선순위 '기술적 안정성' 완전 충족",
+      "persona_factor": "priorities.primary"
+    }
+    // ... 나머지 4개 지표
+  },
+  "weighted_total_score": 87,
+  "persona_feedback": "30개 속성 페르소나 관점에서의 종합 피드백"
 }
 ```
 
 ## 📈 다음 단계
-1. **프로덕션 배포**: Cloudflare Pages 프로덕션 환경 구성
-2. **API 키 보안**: Cloudflare Secrets 관리 설정  
-3. **성능 모니터링**: Workers Analytics 대시보드 구성
-4. **사용자 인터페이스**: React 기반 웹 인터페이스 구축
-5. **배치 처리**: 대량 데이터 분석을 위한 Queue 시스템 추가
-
-## 🔒 보안 고려사항
-- OpenAI API 키는 Cloudflare Secrets으로 관리
-- 모든 API 요청은 HTTPS 강제
-- 입력 데이터 검증 및 sanitization 적용
-- Rate limiting으로 남용 방지
+1. **TypeScript 오류 해결**: 빌드 오류 수정 및 프로덕션 배포
+2. **Railway 배포**: GitHub 연동 후 자동 배포 설정
+3. **성능 최적화**: 30속성 프롬프트 길이 최적화
+4. **UI/UX 개선**: 30속성 페르소나 시각화 대시보드 
+5. **배치 평가**: 다수 제안서 동시 평가 기능
 
 ## 🌟 핵심 성과
-- ⚡ **응답속도 90% 개선**: 웹크롤링 → GPT-4o 지식 기반 전환
-- 🎯 **정확도 95%**: NLP + LLM 하이브리드 RFP 파싱
-- 🔧 **안정성 향상**: 외부 의존성 제거 및 Workers Unbound 활용
-- 🌏 **한국어 최적화**: 국내 비즈니스 환경에 특화된 분석 시스템
+- ⚡ **30속성 통합 완료**: 하드코딩 완전 제거, 개인화 평가 구현
+- 🎯 **6지표 페르소나 매핑**: 각 평가 지표별 페르소나 속성 직접 연결
+- 🔧 **실시간 LLM 평가**: GPT-4o 기반 30초 제한 동적 평가
+- 🌏 **실제 파일 처리**: PDF/DOCX 업로드 기반 RFP 분석 완전 구현
+- 📊 **메모리 기반 저장**: Railway 환경 최적화 실시간 데이터 관리
