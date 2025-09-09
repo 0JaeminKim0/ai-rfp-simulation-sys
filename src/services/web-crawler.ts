@@ -162,7 +162,7 @@ export class WebCrawlerService {
       '포스코': ['posco.co.kr', 'posco.com'],
       '네이버': ['naver.com', 'navercorp.com'],
       '카카오': ['kakaocorp.com', 'kakao.com'],
-      '금고석유화학': ['geumgo.co.kr', 'geumgo-petro.com'], // 데모 회사
+      '금호석유화학': ['geumgo.co.kr', 'geumgo-petro.com'], // 데모 회사
       'PwC': ['pwc.com', 'pwc.co.kr'],
       '딜로이트': ['deloitte.com', 'deloitte.co.kr']
     }

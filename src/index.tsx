@@ -878,7 +878,7 @@ app.post('/api/evaluations/presentation', async (c) => {
 app.post('/api/demo/presentation-evaluation', async (c) => {
   try {
     // 샘플 STT 텍스트
-    const sampleSTT = "안녕하십니까, PwC 컨설팅의 발표를 시작하겠습니다. 이번 제안의 핵심은 ERP, MES, ESG 시스템을 하나의 플랫폼으로 통합하는 것입니다. 이를 통해 금고석유화학은 글로벌 ESG 규제에 선제적으로 대응하고, 공정 데이터를 경영 의사결정에 직접 연결할 수 있습니다. 또한, 저희는 화학 산업 프로젝트 경험과 글로벌 ESG 대응 노하우를 바탕으로, 안정적인 실행을 보장합니다. 마지막으로, 단계별 PoC를 통해 리스크를 최소화하고, 12개월 내 성공적인 플랫폼 구축을 완수하겠습니다. 감사합니다."
+    const sampleSTT = "안녕하십니까, PwC 컨설팅의 발표를 시작하겠습니다. 이번 제안의 핵심은 ERP, MES, ESG 시스템을 하나의 플랫폼으로 통합하는 것입니다. 이를 통해 금호석유화학은 글로벌 ESG 규제에 선제적으로 대응하고, 공정 데이터를 경영 의사결정에 직접 연결할 수 있습니다. 또한, 저희는 화학 산업 프로젝트 경험과 글로벌 ESG 대응 노하우를 바탕으로, 안정적인 실행을 보장합니다. 마지막으로, 단계별 PoC를 통해 리스크를 최소화하고, 12개월 내 성공적인 플랫폼 구축을 완수하겠습니다. 감사합니다."
     
     // 샘플 음성 메트릭
     const speechMetrics = {
@@ -942,7 +942,7 @@ app.post('/api/demo/presentation-evaluation', async (c) => {
     // 발표 평가 결과 구성
     const presentationEvaluation = {
       customer_id: 'demo-customer',
-      presentation_title: '금고석유화학 DX 플랫폼 구축 제안',
+      presentation_title: '금호석유화학 DX 플랫폼 구축 제안',
       stt_transcript: sampleSTT,
       speech_metrics: speechMetrics,
       scores: convertedScores,  // 변환된 점수 사용 (100점 만점 + 5점 원본)
@@ -1428,7 +1428,7 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
     
     // 샘플 RFP 텍스트로 간단한 분석
     const sampleRfpText = `
-    발주처: 금고석유화학
+    발주처: 금호석유화학
     프로젝트: ERP 시스템 고도화
     예산: 100억원
     기간: 12개월  
@@ -1449,7 +1449,7 @@ JSON 응답:
 }`
 
     const fallback = {
-      1: { id: "1", name: "발주사명", content: "금고석유화학", source_snippet: "발주처: 금고석유화학", page_number: 1, section_title: "개요", extracted_at: new Date().toISOString() },
+      1: { id: "1", name: "발주사명", content: "금호석유화학", source_snippet: "발주처: 금호석유화학", page_number: 1, section_title: "개요", extracted_at: new Date().toISOString() },
       2: { id: "2", name: "프로젝트 목표", content: "ERP 시스템 고도화", source_snippet: "프로젝트: ERP 시스템 고도화", page_number: 1, section_title: "목표", extracted_at: new Date().toISOString() },
       3: { id: "3", name: "프로젝트 예산", content: "100억원", source_snippet: "예산: 100억원", page_number: 1, section_title: "예산", extracted_at: new Date().toISOString() },
       4: { id: "4", name: "프로젝트 기간", content: "12개월", source_snippet: "기간: 12개월", page_number: 1, section_title: "기간", extracted_at: new Date().toISOString() },
@@ -2390,7 +2390,7 @@ app.get('/proposal-evaluation', (c) => {
                     <div class="pwc-form-group">
                         <label class="pwc-label">제안서 제목</label>
                         <input type="text" id="proposal-title" class="pwc-input" 
-                               placeholder="예: 금고석유화학 DX 전략 수립 및 실행">
+                               placeholder="예: 금호석유화학 DX 전략 수립 및 실행">
                     </div>
                     <div class="pwc-form-group">
                         <label class="pwc-label">제안사명</label>
@@ -2626,7 +2626,7 @@ app.get('/customer-generation', (c) => {
                 <div class="pwc-grid pwc-grid-2">
                     <div class="pwc-form-group">
                         <label class="pwc-label">회사명</label>
-                        <input type="text" id="company-name" class="pwc-input" placeholder="예: 금고석유화학">
+                        <input type="text" id="company-name" class="pwc-input" placeholder="예: 금호석유화학">
                     </div>
                     <div class="pwc-form-group">
                         <label class="pwc-label">분석 깊이</label>
@@ -2854,7 +2854,7 @@ app.get('/presentation-evaluation', (c) => {
                     <div class="pwc-form-group">
                         <label class="pwc-label">발표 제목</label>
                         <input type="text" id="presentation-title" class="pwc-input" 
-                               placeholder="예: 금고석유화학 DX 플랫폼 구축 제안">
+                               placeholder="예: 금호석유화학 DX 플랫폼 구축 제안">
                     </div>
                     <div class="pwc-form-group">
                         <label class="pwc-label">예상 발표 시간 (분)</label>
@@ -3441,7 +3441,7 @@ app.get('/results', (c) => {
                                 <i class="fas fa-star"></i>총평
                             </h3>
                             <p style="color: var(--info-color); line-height: 1.6; word-break: keep-all;">
-                                금고석유화학의 ESG 경영과 DX 니즈를 정확히 파악한 우수한 제안입니다. 
+                                금호석유화학의 ESG 경영과 DX 니즈를 정확히 파악한 우수한 제안입니다. 
                                 화학산업 전문성과 글로벌 경험을 바탕으로 한 안정적 실행력이 돋보이며, 
                                 장기적 파트너십 구축에 적합한 신뢰할 수 있는 제안으로 평가됩니다.
                             </p>

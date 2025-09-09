@@ -202,7 +202,7 @@ class ProposalEvaluationApp {
 
   loadDemoProposal() {
     // 데모 제안서 정보 설정
-    document.getElementById('proposal-title').value = '금고석유화학 DX 전략 수립 및 실행'
+    document.getElementById('proposal-title').value = '금호석유화학 DX 전략 수립 및 실행'
     document.getElementById('proposal-company').value = 'PwC 컨설팅'
 
     this.uploadedProposal = {
@@ -212,7 +212,7 @@ class ProposalEvaluationApp {
       type: '.pdf',
       isDemo: true,
       content: `
-프로젝트명: 금고석유화학 DX 전략 수립 및 실행
+프로젝트명: 금호석유화학 DX 전략 수립 및 실행
 제안사: PwC 컨설팅
 
 목표: ERP–MES–ESG 시스템을 통합해 데이터 기반 의사결정 강화

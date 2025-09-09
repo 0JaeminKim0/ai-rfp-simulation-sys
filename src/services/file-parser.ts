@@ -152,7 +152,7 @@ export class FileParserService {
 RFP 문서 (제안요청서)
 
 1. 발주 개요
-발주처: 금고석유화학 주식회사
+발주처: 금호석유화학 주식회사
 담당부서: Digital Innovation팀
 프로젝트명: ERP-MES-ESG 통합 DX 플랫폼 구축
 

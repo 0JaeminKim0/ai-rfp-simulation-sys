@@ -569,8 +569,8 @@ class CustomerGenerationApp {
     try {
       this.showLoading('데모 딥리서치 데이터 로딩 중...')
       
-      // 데모 딥리서치는 항상 "금고석유화학"으로 고정
-      const companyName = '금고석유화학'
+      // 데모 딥리서치는 항상 "금호석유화학"으로 고정
+      const companyName = '금호석유화학'
       
       // 회사명 자동 설정
       const companyNameInput = document.getElementById('company-name')
@@ -606,8 +606,8 @@ class CustomerGenerationApp {
     try {
       this.showLoading('데모 RFP 분석 데이터 로딩 중...')
 
-      // 데모 RFP 분석은 항상 "금고석유화학"으로 고정
-      const companyName = '금고석유화학'
+      // 데모 RFP 분석은 항상 "금호석유화학"으로 고정
+      const companyName = '금호석유화학'
       
       // 회사명 자동 설정 
       const companyNameInput = document.getElementById('company-name')

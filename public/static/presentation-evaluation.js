@@ -562,7 +562,7 @@ class PresentationEvaluationApp {
       // 데모 발표 평가 API 호출
       const response = await axios.post('/api/demo/presentation-evaluation', {
         customer_id: this.selectedCustomer.id,
-        presentation_title: document.getElementById('presentation-title').value || '금고석유화학 DX 플랫폼 구축 제안',
+        presentation_title: document.getElementById('presentation-title').value || '금호석유화학 DX 플랫폼 구축 제안',
         transcript_text: this.sttText,
         speech_metrics: this.speechMetrics
       })
@@ -582,7 +582,7 @@ class PresentationEvaluationApp {
       this.showLoading('데모 발표 평가를 실행 중...')
       
       // 데모 데이터로 STT 텍스트 설정
-      const demoSTTText = "안녕하십니까, PwC 컨설팅의 발표를 시작하겠습니다. 이번 제안의 핵심은 ERP, MES, ESG 시스템을 하나의 플랫폼으로 통합하는 것입니다. 이를 통해 금고석유화학은 글로벌 ESG 규제에 선제적으로 대응하고, 공정 데이터를 경영 의사결정에 직접 연결할 수 있습니다. 또한, 저희는 화학 산업 프로젝트 경험과 글로벌 ESG 대응 노하우를 바탕으로, 안정적인 실행을 보장합니다. 마지막으로, 단계별 PoC를 통해 리스크를 최소화하고, 12개월 내 성공적인 플랫폼 구축을 완수하겠습니다. 감사합니다."
+      const demoSTTText = "안녕하십니까, PwC 컨설팅의 발표를 시작하겠습니다. 이번 제안의 핵심은 ERP, MES, ESG 시스템을 하나의 플랫폼으로 통합하는 것입니다. 이를 통해 금호석유화학은 글로벌 ESG 규제에 선제적으로 대응하고, 공정 데이터를 경영 의사결정에 직접 연결할 수 있습니다. 또한, 저희는 화학 산업 프로젝트 경험과 글로벌 ESG 대응 노하우를 바탕으로, 안정적인 실행을 보장합니다. 마지막으로, 단계별 PoC를 통해 리스크를 최소화하고, 12개월 내 성공적인 플랫폼 구축을 완수하겠습니다. 감사합니다."
       this.sttText = demoSTTText
       
       // STT 섹션 표시 및 텍스트 업데이트
@@ -613,7 +613,7 @@ class PresentationEvaluationApp {
       // 발표 제목 설정
       const titleInput = document.getElementById('presentation-title')
       if (!titleInput.value) {
-        titleInput.value = '금고석유화학 DX 플랫폼 구축 제안'
+        titleInput.value = '금호석유화학 DX 플랫폼 구축 제안'
       }
       
       // 데모 평가 실행

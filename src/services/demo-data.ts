@@ -172,7 +172,7 @@ export class DemoDataService {
         id: "1",
         name: "발주사명",
         content: companyName,
-        source_snippet: "발주처: 금고석유화학 주식회사",
+        source_snippet: "발주처: 금호석유화학 주식회사",
         page_number: 1,
         section_title: "프로젝트 개요",
         extracted_at: new Date().toISOString()
@@ -350,7 +350,7 @@ export class DemoDataService {
     return {
       id: "demo-proposal-eval-2025",
       customer_id: "demo-customer-kumho-2025", 
-      proposal_title: "금고석유화학 DX 전략 수립 및 실행 (PwC 컨설팅)",
+      proposal_title: "금호석유화학 DX 전략 수립 및 실행 (PwC 컨설팅)",
       proposal_file_path: "/uploads/pwc_kumho_proposal.pdf",
       
       scores: {
@@ -392,7 +392,7 @@ export class DemoDataService {
         }
       },
       
-      overall_comment: "ESG와 DX를 동시에 추구하는 금고석유화학의 니즈를 정확히 파악하고, 안정적이면서도 전문적인 실행 방안을 제시. 화학산업 도메인 경험과 글로벌 ESG 대응 역량이 강점. 다만 혁신적 차별화 요소는 다소 아쉬움",
+      overall_comment: "ESG와 DX를 동시에 추구하는 금호석유화학의 니즈를 정확히 파악하고, 안정적이면서도 전문적인 실행 방안을 제시. 화학산업 도메인 경험과 글로벌 ESG 대응 역량이 강점. 다만 혁신적 차별화 요소는 다소 아쉬움",
       total_score_5: 4.17, // (4+5+4+4+3+5)/6 - 5점 만점
       total_score_100: 40, // 4.17 → 40점 (100점 만점)
       total_score: 40, // 기본은 100점 만점
@@ -405,9 +405,9 @@ export class DemoDataService {
     return {
       id: "demo-presentation-eval-2025",
       customer_id: "demo-customer-kumho-2025",
-      presentation_title: "금고석유화학 DX 플랫폼 구축 제안 발표",
+      presentation_title: "금호석유화학 DX 플랫폼 구축 제안 발표",
       audio_file_path: "/uploads/pwc_presentation_audio.wav",
-      transcript_text: "안녕하십니까, PwC 컨설팅의 발표를 시작하겠습니다. 이번 제안의 핵심은 ERP, MES, ESG 시스템을 하나의 플랫폼으로 통합하는 것입니다. 이를 통해 금고석유화학은 글로벌 ESG 규제에 선제적으로 대응하고, 공정 데이터를 경영 의사결정에 직접 연결할 수 있습니다. 또한, 저희는 화학 산업 프로젝트 경험과 글로벌 ESG 대응 노하우를 바탕으로, 안정적인 실행을 보장합니다. 마지막으로, 단계별 PoC를 통해 리스크를 최소화하고, 12개월 내 성공적인 플랫폼 구축을 완수하겠습니다. 감사합니다.",
+      transcript_text: "안녕하십니까, PwC 컨설팅의 발표를 시작하겠습니다. 이번 제안의 핵심은 ERP, MES, ESG 시스템을 하나의 플랫폼으로 통합하는 것입니다. 이를 통해 금호석유화학은 글로벌 ESG 규제에 선제적으로 대응하고, 공정 데이터를 경영 의사결정에 직접 연결할 수 있습니다. 또한, 저희는 화학 산업 프로젝트 경험과 글로벌 ESG 대응 노하우를 바탕으로, 안정적인 실행을 보장합니다. 마지막으로, 단계별 PoC를 통해 리스크를 최소화하고, 12개월 내 성공적인 플랫폼 구축을 완수하겠습니다. 감사합니다.",
       
       scores: {
         clarity: { 
