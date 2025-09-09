@@ -1199,8 +1199,22 @@ app.post('/api/demo/generate-customer', async (c) => {
       try {
         const storage = new JsonStorageService(c.env.KV)
         
-        // 새로운 고객 저장 (기존 데이터는 새로운 데이터로 자동 교체됨)
+        // 동일한 회사명의 기존 고객이 있다면 교체, 없다면 추가
+        const existingCustomers = await storage.getAllVirtualCustomers()
+        const sameCompanyCustomer = existingCustomers.find(customer => 
+          customer.company_name === companyName && customer.id.startsWith('demo-customer-')
+        )
+        
+        if (sameCompanyCustomer) {
+          console.log(`기존 고객 교체: ${sameCompanyCustomer.id} → ${customerId}`)
+          // 기존 고객 삭제
+          await c.env.KV.delete(`customer:${sameCompanyCustomer.id}`)
+        }
+        
+        // 새로운 고객 저장
         await storage.saveVirtualCustomer(customerWithId)
+        console.log(`새 고객 저장 완료: ${customerId} (회사명: ${companyName})`)
+        
       } catch (kvError) {
         console.log('KV 저장 실패, 메모리만 사용:', kvError.message)
       }

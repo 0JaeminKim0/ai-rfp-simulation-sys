@@ -682,16 +682,8 @@ class CustomerGenerationApp {
       
       this.showLoading('AI 가상고객 생성 데모 로딩 중...')
       
-      // 0단계: 기존 스토리지 데이터 초기화 (새로운 고객 생성 전)
-      try {
-        const clearResponse = await axios.post('/api/dev/clear-storage', {}, { 
-          timeout: 10000 // 10초 타임아웃
-        })
-        console.log('✅ 스토리지 초기화 성공:', clearResponse.data.message)
-      } catch (clearError) {
-        console.log('⚠️ 스토리지 초기화 실패 (계속 진행):', clearError.response?.data?.error || clearError.message)
-        // 스토리지 초기화 실패해도 계속 진행
-      }
+      // 참고: 기존 고객 데이터는 새로운 고객 생성 시 자동으로 교체됩니다
+      console.log('🚀 AI 가상고객 생성 프로세스 시작, 회사명:', companyName)
       
       // 1단계: 데모 딥리서치 데이터 자동 로드
       console.log('🔍 1단계: 딥리서치 데이터 로드 시작, 회사명:', companyName)
