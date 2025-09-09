@@ -10,13 +10,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     target: isRailwayBuild ? 'node18' : 'esnext',
+    lib: isRailwayBuild ? {
+      entry: 'src/index.tsx',
+      formats: ['es'],
+      fileName: 'index'
+    } : undefined,
     rollupOptions: isRailwayBuild ? {
       // Railway: Node.js 환경용 설정
-      external: ['@hono/node-server', 'hono'],
-      input: 'src/index.tsx',
+      external: ['@hono/node-server', '@hono/node-server/serve-static'],
       output: {
-        format: 'es',
-        entryFileNames: '[name].js'
+        format: 'es'
       }
     } : undefined
   }
