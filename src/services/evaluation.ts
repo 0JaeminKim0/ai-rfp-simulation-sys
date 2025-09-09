@@ -11,7 +11,7 @@ import type {
 
 export class EvaluationService {
   
-  // 6대 지표 루브릭 앵커 정의 (1-5점)
+  // 6대 지표 루브릭 앵커 정의 (60-100점)
   private readonly RUBRIC_ANCHORS = {
     clarity: {
       1: "목적·범위·효과가 모호하거나 누락, 핵심 전달 실패",
@@ -303,7 +303,7 @@ ${content}
 6. 신뢰성 (Credibility): ${this.METRIC_DEFINITIONS.credibility}
 
 【루브릭 기준】
-각 지표는 1-5점으로 채점하며, 기준은 다음과 같습니다:
+각 지표는 60-100점으로 채점하며, 기준은 다음과 같습니다:
 ${this.formatRubricAnchors()}
 
 【출력 형식】

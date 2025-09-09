@@ -464,57 +464,81 @@ ${content}
 
 ${additionalContext ? `추가 컨텍스트: ${additionalContext}` : ''}
 
-다음 6대 지표를 1-5점 루브릭 기준으로 엄격하게 평가해주세요:
+다음 6대 지표를 100점 척도 루브릭 기준으로 엄격하게 평가해주세요:
 
-명확성 (1-5점):
-${Object.entries(rubricAnchors.clarity).map(([score, desc]) => `${score}점: ${desc}`).join('\n')}
+명확성 (100점 척도):
+- 90-100점: 모든 메시지가 직관적으로 명확, 구조적·간결하며 완결성 확보
+- 80-89점: 목적·범위·효과가 잘 드러나고, 전체 구조가 이해 가능
+- 70-79점: 기본 흐름은 명확하나 세부 설명 부족, 중복/모호 표현 존재
+- 60-69점: 일부 명확하나 전체적으로 불분명, 구조가 흐트러짐
+- 60점 미만: 목적·범위·효과가 모호하거나 누락, 핵심 전달 실패
 
-전문성 (1-5점):  
-${Object.entries(rubricAnchors.expertise).map(([score, desc]) => `${score}점: ${desc}`).join('\n')}
+전문성 (100점 척도):
+- 90-100점: 최신 기술·글로벌 레퍼런스 풍부, 깊이와 폭 모두 뛰어남
+- 80-89점: 업계 표준·최신 트렌드·레퍼런스를 적절히 활용
+- 70-79점: 기본적인 전문 지식·사례는 있으나 깊이가 부족
+- 60-69점: 일부 용어나 개념만 언급, 최신성·정확성 부족
+- 60점 미만: 업계/기술 근거 전혀 없음, 피상적 주장
 
-설득력 (1-5점):
-${Object.entries(rubricAnchors.persuasiveness).map(([score, desc]) => `${score}점: ${desc}`).join('\n')}
+설득력 (100점 척도):
+- 90-100점: 강력한 데이터·사례·스토리텔링으로 고객 확신 유발
+- 80-89점: 데이터·사례를 통해 고객 요구와 논리적으로 연결
+- 70-79점: 근거는 있으나 고객 Pain Point와 연결성이 약함
+- 60-69점: 제한된 근거 제시, 설득력 약함
+- 60점 미만: 주장만 있고 근거·사례 없음, 고객 요구와 불일치
 
-논리성 (1-5점):
-${Object.entries(rubricAnchors.logic).map(([score, desc]) => `${score}점: ${desc}`).join('\n')}
+논리성 (100점 척도):
+- 90-100점: 매우 체계적, 모든 단계가 명확히 연결, 모순·비약 없음
+- 80-89점: 일관된 논리 전개, 단계별 근거 설명 충실
+- 70-79점: 기본 구조(문제→목표→해결책)는 있으나 불완전
+- 60-69점: 부분적 논리만 존재, 전개 과정에서 비약·누락 발생
+- 60점 미만: 구조 없음, 아이디어가 단절·모순적
 
-창의성 (1-5점):
-${Object.entries(rubricAnchors.creativity).map(([score, desc]) => `${score}점: ${desc}`).join('\n')}
+창의성 (100점 척도):
+- 90-100점: 혁신적이고 차별적인 아이디어, 고객 맥락에 최적화
+- 80-89점: 새로운 아이디어나 방법론 제시, 실행 가능성 확보
+- 70-79점: 기본적인 차별화는 있으나 독창성 부족
+- 60-69점: 소폭 차별화 있으나 기존과 유사, 참신성 낮음
+- 60점 미만: 기존 접근법 반복, 차별성 전혀 없음
 
-신뢰성 (1-5점):
-${Object.entries(rubricAnchors.credibility).map(([score, desc]) => `${score}점: ${desc}`).join('\n')}
+신뢰성 (100점 척도):
+- 90-100점: 실행력 완벽 검증, 풍부한 레퍼런스와 리스크 대비책 확보
+- 80-89점: 유사 프로젝트 경험·리스크 관리·규제 준수 근거 제시
+- 70-79점: 일부 실행 근거 제시, 보완 필요
+- 60-69점: 제한적 실행 가능성, 근거 부족
+- 60점 미만: 실행 가능성 전혀 없음, 레퍼런스 부재
 
 ${customer.customer_type} 관점에서 고객사의 우선순위와 우려사항을 고려하여 평가하되, 루브릭 기준을 엄격하게 적용하세요.
 
 응답 형식: JSON
 {
   "clarity": {
-    "score": 점수(1-5),
+    "score": 점수(60-100),
     "rationale": "평가 근거 (200자 내외)",
     "improvement_suggestions": "개선 방안 (150자 내외)"
   },
   "expertise": {
-    "score": 점수(1-5), 
+    "score": 점수(60-100), 
     "rationale": "평가 근거",
     "improvement_suggestions": "개선 방안"
   },
   "persuasiveness": {
-    "score": 점수(1-5),
+    "score": 점수(60-100),
     "rationale": "평가 근거", 
     "improvement_suggestions": "개선 방안"
   },
   "logic": {
-    "score": 점수(1-5),
+    "score": 점수(60-100),
     "rationale": "평가 근거",
     "improvement_suggestions": "개선 방안"
   },
   "creativity": {
-    "score": 점수(1-5),
+    "score": 점수(60-100),
     "rationale": "평가 근거",
     "improvement_suggestions": "개선 방안"
   },
   "credibility": {
-    "score": 점수(1-5),
+    "score": 점수(60-100),
     "rationale": "평가 근거",
     "improvement_suggestions": "개선 방안"
   },
