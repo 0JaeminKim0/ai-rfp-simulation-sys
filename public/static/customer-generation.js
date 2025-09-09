@@ -41,8 +41,8 @@ class CustomerGenerationApp {
       this.loadDemoRfpAnalysis()
     })
 
-    // 가상고객 생성 버튼
-    document.getElementById('generate-customer')?.addEventListener('click', () => {
+    // 가상고객 생성 버튼 (demo2)
+    document.getElementById('demo2-generate-customer')?.addEventListener('click', () => {
       this.generateCustomer()
     })
 
@@ -364,19 +364,42 @@ RFP 문서 분석을 위한 기본 정보:
   }
 
   checkGenerationReady() {
-    const generateBtn = document.getElementById('generate-customer')
+    // 실제 존재하는 버튼들을 찾습니다
+    const demoGenerateBtn = document.getElementById('demo-generate-customer')
+    const demo2GenerateBtn = document.getElementById('demo2-generate-customer')
+    
     if (this.deepResearchData && this.rfpAnalysisData) {
-      generateBtn?.removeAttribute('disabled')
-      generateBtn.style.backgroundColor = 'var(--pwc-navy)'
-      generateBtn.style.cursor = 'pointer'
-      generateBtn.style.opacity = '1'
-      
-      // 호버 효과
-      generateBtn.onmouseenter = () => {
-        generateBtn.style.backgroundColor = 'var(--pwc-navy-light)'
+      // 첫 번째 버튼 처리
+      if (demoGenerateBtn) {
+        demoGenerateBtn.removeAttribute('disabled')
+        demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy)'
+        demoGenerateBtn.style.cursor = 'pointer'
+        demoGenerateBtn.style.opacity = '1'
+        
+        // 호버 효과
+        demoGenerateBtn.onmouseenter = () => {
+          demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy-light)'
+        }
+        demoGenerateBtn.onmouseleave = () => {
+          demoGenerateBtn.style.backgroundColor = 'var(--pwc-navy)'
+        }
       }
-      generateBtn.onmouseleave = () => {
-        generateBtn.style.backgroundColor = 'var(--pwc-navy)'
+      
+      // 두 번째 버튼 처리
+      if (demo2GenerateBtn) {
+        demo2GenerateBtn.removeAttribute('disabled')
+        demo2GenerateBtn.style.cursor = 'pointer'
+        demo2GenerateBtn.style.opacity = '1'
+        
+        // 원래 스타일을 유지하면서 호버 효과 추가
+        demo2GenerateBtn.onmouseenter = () => {
+          demo2GenerateBtn.style.transform = 'translateY(-2px)'
+          demo2GenerateBtn.style.boxShadow = '0 6px 20px rgba(0, 51, 102, 0.4)'
+        }
+        demo2GenerateBtn.onmouseleave = () => {
+          demo2GenerateBtn.style.transform = 'translateY(0)'
+          demo2GenerateBtn.style.boxShadow = '0 4px 12px rgba(0, 51, 102, 0.3)'
+        }
       }
     }
   }
