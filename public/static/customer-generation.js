@@ -233,7 +233,7 @@ class CustomerGenerationApp {
           const currentContent = detailsDiv.innerHTML
           detailsDiv.innerHTML = currentContent.replace(
             /파일 업로드 완료.*세요/,
-            'AI 분석 완료 - 15개 속성 추출 완료'
+            '✅ LLM AI 분석 완료 - 15개 속성 추출 완료'
           )
         }
       } else {

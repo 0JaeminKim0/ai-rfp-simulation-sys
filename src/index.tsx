@@ -1696,14 +1696,67 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
     평가기준: 기술 70%, 가격 30%
     `
 
-    const prompt = '다음 업로드된 RFP 문서에서 핵심 정보 5개를 각 30자 이내로 추출해주세요:\n\n' + rfpText + '\n\nJSON 응답:\n{\n  "1": {"id":"1","name":"발주사명","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"개요","extracted_at":"' + new Date().toISOString() + '"},\n  "2": {"id":"2","name":"프로젝트 목표","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"목표","extracted_at":"' + new Date().toISOString() + '"},\n  "3": {"id":"3","name":"프로젝트 예산","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"예산","extracted_at":"' + new Date().toISOString() + '"},\n  "4": {"id":"4","name":"프로젝트 기간","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"기간","extracted_at":"' + new Date().toISOString() + '"},\n  "5": {"id":"5","name":"평가기준","content":"30자 이내","source_snippet":"원문","page_number":1,"section_title":"평가","extracted_at":"' + new Date().toISOString() + '"}\n}'
+    // 15개 속성을 위한 향상된 LLM 프롬프트
+    const prompt = `다음 업로드된 RFP 문서에서 15개 핵심 속성을 분석하여 추출해주세요:
 
+${rfpText}
+
+**15개 분석 속성**:
+1. 발주사명 - 프로젝트 발주 기업/기관 공식명
+2. 발주부서 - 프로젝트를 주관하는 부서명
+3. 프로젝트 배경 - 추진 배경, 문제 인식, 필요성
+4. 프로젝트 목표 - 달성하고자 하는 목적, 성과 지표
+5. 프로젝트 범위 - 포함되는 영역, 시스템, 업무 범위
+6. 프로젝트 기간 - 착수~종료 기간, 중간 마일스톤
+7. 프로젝트 예산 - 총 예산 규모, 산출 기준
+8. 평가기준 - 기술/가격 비율, 가점 요소
+9. 요구 산출물 - 제출해야 하는 보고서, 산출물
+10. 입찰사 요건 - 참여 자격, 수행 경력, 인증 조건
+11. 준수사항 - NDA, 법규 준수, 표준/가이드라인
+12. 리스크 관리 조건 - 일정 지연 방지, 페널티 조건
+13. 필수 역량 - 반드시 보유해야 할 기술 스택, 전문인력
+14. 진행 일정 - 제안서 접수~선정까지 절차와 타임라인
+15. 특이조건/기타 요구 - 특수 요구사항, 추가 조건
+
+각 속성에 대해 30자 이내로 핵심 내용을 추출하고, 해당 원문 부분을 인용해주세요.
+정보가 없는 경우 "정보 없음"으로 표시해주세요.
+
+JSON 응답 (15개 모든 속성):
+{
+  "1": {"id":"1","name":"발주사명","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "2": {"id":"2","name":"발주부서","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "3": {"id":"3","name":"프로젝트 배경","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "4": {"id":"4","name":"프로젝트 목표","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "5": {"id":"5","name":"프로젝트 범위","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "6": {"id":"6","name":"프로젝트 기간","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "7": {"id":"7","name":"프로젝트 예산","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "8": {"id":"8","name":"평가기준","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "9": {"id":"9","name":"요구 산출물","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "10": {"id":"10","name":"입찰사 요건","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "11": {"id":"11","name":"준수사항","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "12": {"id":"12","name":"리스크 관리 조건","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "13": {"id":"13","name":"필수 역량","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "14": {"id":"14","name":"진행 일정","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"},
+  "15": {"id":"15","name":"특이조건/기타 요구","content":"추출된 내용 (30자 이내)","source_snippet":"해당 원문 부분","page_number":1,"section_title":"섹션명","extracted_at":"${new Date().toISOString()}"}
+}`
+
+    // 15개 속성 폴백 데이터 (LLM 실패 시 사용)
     const fallback = {
       1: { id: "1", name: "발주사명", content: "금호석유화학", source_snippet: "발주처: 금호석유화학", page_number: 1, section_title: "개요", extracted_at: new Date().toISOString() },
-      2: { id: "2", name: "프로젝트 목표", content: "ERP 시스템 고도화", source_snippet: "프로젝트: ERP 시스템 고도화", page_number: 1, section_title: "목표", extracted_at: new Date().toISOString() },
-      3: { id: "3", name: "프로젝트 예산", content: "100억원", source_snippet: "예산: 100억원", page_number: 1, section_title: "예산", extracted_at: new Date().toISOString() },
-      4: { id: "4", name: "프로젝트 기간", content: "12개월", source_snippet: "기간: 12개월", page_number: 1, section_title: "기간", extracted_at: new Date().toISOString() },
-      5: { id: "5", name: "평가기준", content: "기술 70%, 가격 30%", source_snippet: "평가기준: 기술 70%, 가격 30%", page_number: 1, section_title: "평가", extracted_at: new Date().toISOString() }
+      2: { id: "2", name: "발주부서", content: "IT기획팀", source_snippet: "담당부서: IT기획팀", page_number: 1, section_title: "연락처", extracted_at: new Date().toISOString() },
+      3: { id: "3", name: "프로젝트 배경", content: "디지털 전환을 통한 업무 효율성 증대", source_snippet: "급변하는 디지털 환경에서...", page_number: 1, section_title: "배경", extracted_at: new Date().toISOString() },
+      4: { id: "4", name: "프로젝트 목표", content: "ERP 시스템 고도화 및 통합", source_snippet: "프로젝트: ERP 시스템 고도화", page_number: 1, section_title: "목표", extracted_at: new Date().toISOString() },
+      5: { id: "5", name: "프로젝트 범위", content: "전사 ERP 모듈 구축 및 연동", source_snippet: "ERP 전체 모듈 구축 범위", page_number: 2, section_title: "범위", extracted_at: new Date().toISOString() },
+      6: { id: "6", name: "프로젝트 기간", content: "12개월 (2024.3~2025.2)", source_snippet: "기간: 12개월", page_number: 2, section_title: "일정", extracted_at: new Date().toISOString() },
+      7: { id: "7", name: "프로젝트 예산", content: "100억원 (부가세 포함)", source_snippet: "예산: 100억원", page_number: 2, section_title: "예산", extracted_at: new Date().toISOString() },
+      8: { id: "8", name: "평가기준", content: "기술 70%, 가격 30%", source_snippet: "평가기준: 기술 70%, 가격 30%", page_number: 3, section_title: "평가", extracted_at: new Date().toISOString() },
+      9: { id: "9", name: "요구 산출물", content: "제안서, 설계서, 테스트 결과서", source_snippet: "제출 산출물: 제안서 외 3종", page_number: 3, section_title: "산출물", extracted_at: new Date().toISOString() },
+      10: { id: "10", name: "입찰사 요건", content: "ERP 구축 경험 3년 이상", source_snippet: "참가자격: ERP 구축 실적 필수", page_number: 3, section_title: "자격", extracted_at: new Date().toISOString() },
+      11: { id: "11", name: "준수사항", content: "정보보호 서약서, 보안 가이드라인", source_snippet: "보안 관련 준수사항 필수", page_number: 4, section_title: "준수", extracted_at: new Date().toISOString() },
+      12: { id: "12", name: "리스크 관리 조건", content: "지연 시 페널티 부과 (일 0.1%)", source_snippet: "일정 지연 배상 조건", page_number: 4, section_title: "리스크", extracted_at: new Date().toISOString() },
+      13: { id: "13", name: "필수 역량", content: "SAP 인증, 프로젝트 매니저 자격증", source_snippet: "필수 기술자격 요건", page_number: 4, section_title: "역량", extracted_at: new Date().toISOString() },
+      14: { id: "14", name: "진행 일정", content: "공고→접수→평가→계약 (2개월)", source_snippet: "입찰 진행 일정표", page_number: 5, section_title: "일정", extracted_at: new Date().toISOString() },
+      15: { id: "15", name: "특이조건/기타 요구", content: "클라우드 우선, 국산 소프트웨어 가점", source_snippet: "기타 특별 요구사항", page_number: 5, section_title: "기타", extracted_at: new Date().toISOString() }
     }
 
     // 30초 타임아웃으로 실제 LLM 호출 (업로드된 파일 분석)
@@ -1715,7 +1768,7 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
           model: "gpt-4o",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.2,
-          max_tokens: 800,
+          max_tokens: 2000,  // 15개 속성을 위해 토큰 수 증가
           response_format: { type: "json_object" }
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('30초 타임아웃')), 30000))
@@ -1733,7 +1786,7 @@ app.post('/api/demo2/rfp-analysis', async (c) => {
     return c.json({
       success: true,
       data: result,
-      message: '실제 파일 RFP 분석 완료 (15개 속성): ' + (file_name || '업로드 파일'),
+      message: `실제 LLM RFP 분석 완료 (15개 속성): ${file_name || '업로드 파일'} - ${result === fallback ? 'Fallback 사용' : 'LLM 분석 성공'}`,
       file_info: {
         name: file_name,
         type: file_type,
