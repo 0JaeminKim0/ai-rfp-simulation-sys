@@ -197,7 +197,7 @@ app.get('/api/customers', async (c) => {
     
     // 데모용: 고객이 없으면 데모 고객을 추가
     if (customers.length === 0) {
-      const demoCustomer = DemoDataService.getSampleAIVirtualCustomer()
+      const demoCustomer = DemoDataService.getSampleAIVirtualCustomer('생성된고객')
       const demoCustomerId = `demo-customer-${Date.now()}`
       const demoCustomerWithId = { ...demoCustomer, id: demoCustomerId }
       
@@ -215,7 +215,7 @@ app.get('/api/customers', async (c) => {
     console.error('고객 목록 조회 오류:', error)
     
     // Fallback: 데모 고객 반환
-    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer()
+    const demoCustomer = DemoDataService.getSampleAIVirtualCustomer('생성된고객')
     const demoCustomerId = `demo-customer-${Date.now()}`
     const demoCustomerWithId = { ...demoCustomer, id: demoCustomerId }
     
@@ -1213,6 +1213,8 @@ app.post('/api/demo/generate-customer', async (c) => {
     if (c.env.KV) {
       try {
         const storage = new JsonStorageService(c.env.KV)
+        
+        // 새로운 고객 저장 (기존 데이터는 새로운 데이터로 자동 교체됨)
         await storage.saveVirtualCustomer(customerWithId)
       } catch (kvError) {
         console.log('KV 저장 실패, 메모리만 사용:', kvError.message)
