@@ -1235,6 +1235,44 @@ app.post('/api/demo/generate-customer', async (c) => {
   }
 })
 
+// KV Storage 초기화 API (개발용)
+app.post('/api/dev/clear-storage', async (c) => {
+  try {
+    if (c.env.KV) {
+      const storage = new JsonStorageService(c.env.KV)
+      
+      // 모든 고객 데이터 조회 후 삭제
+      const customers = await storage.getAllVirtualCustomers()
+      
+      for (const customer of customers) {
+        const key = `customer:${customer.id}`
+        await c.env.KV.delete(key)
+      }
+      
+      // 로컬 캐시도 정리
+      storage.clearCache()
+      
+      return c.json({
+        success: true,
+        message: `KV Storage 초기화 완료 (${customers.length}개 고객 데이터 삭제)`,
+        deleted_count: customers.length
+      })
+    }
+    
+    return c.json({
+      success: true,
+      message: "KV Storage를 사용하지 않는 환경입니다",
+      deleted_count: 0
+    })
+    
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500)
+  }
+})
+
 // === 데모2 API들 - 실제 LLM 활용 (15초 이내 보장) ===
 
 // 데모2: 실제 LLM 딥리서치 (5개 핵심 속성만)
