@@ -140,13 +140,22 @@ class CustomerGenerationApp {
     const container = document.getElementById('research-attributes')
     const resultsDiv = document.getElementById('research-results')
     
-    if (!container || !this.deepResearchData) return
+    if (!container || !this.deepResearchData) {
+      console.log('❌ displayResearchResults 실패:', { container: !!container, data: !!this.deepResearchData })
+      return
+    }
+
+    console.log('🖼️ displayResearchResults 시작:', {
+      dataKeys: Object.keys(this.deepResearchData),
+      firstAttr: Object.values(this.deepResearchData)[0]
+    })
 
     resultsDiv.style.display = 'block'
     container.innerHTML = ''
 
     // 15개 속성 카드 생성
     Object.values(this.deepResearchData).forEach((attr, index) => {
+      console.log(`📝 속성 ${index + 1}:`, attr)
       const card = this.createAttributeCard(attr, 'research')
       container.appendChild(card)
     })
@@ -206,6 +215,13 @@ class CustomerGenerationApp {
   }
 
   createAttributeCard(attribute, type) {
+    console.log(`🔧 createAttributeCard 호출:`, { 
+      type, 
+      name: attribute?.name, 
+      content: attribute?.content,
+      hasAttribute: !!attribute 
+    })
+    
     const card = document.createElement('div')
     card.style.cssText = `
       background: var(--neutral-50); 
@@ -809,6 +825,11 @@ class CustomerGenerationApp {
       
       if (response.data.success) {
         this.deepResearchData = response.data.data
+        
+        // 디버깅 로그 추가
+        console.log('🔍 LLM 딥리서치 데이터:', this.deepResearchData)
+        console.log('🔍 첫 번째 속성:', this.deepResearchData[1] || this.deepResearchData['1'])
+        
         this.displayResearchResults()
         this.currentStep = 2
         this.updateProgressBar()
