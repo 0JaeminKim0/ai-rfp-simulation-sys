@@ -741,13 +741,35 @@ app.post('/api/customers/generate', async (c) => {
       }
     }
     
-    // 프로덕션에서는 저장 생략 (즉시 응답)
+    // 고객 ID 생성 및 메모리 저장
     const customerId = crypto.randomUUID()
+    const customerWithId = { ...customer, id: customerId }
+    
+    // 전역 메모리 저장소에 저장 (데모 API와 동일하게)
+    try {
+      const customerKey = `customer:${customerId}`
+      globalMemoryStore.set(customerKey, customerWithId)
+      console.log(`✅ 고객 저장 완료: ${customerId} (회사명: ${company_name})`)
+      
+      // KV Storage도 시도 (Cloudflare 환경용)
+      if (c.env.KV) {
+        try {
+          const storage = new JsonStorageService(c.env.KV)
+          await storage.saveVirtualCustomer(customerWithId)
+          console.log(`☁️ KV Storage 저장도 성공: ${customerId}`)
+        } catch (kvError) {
+          console.log(`⚠️ KV Storage 저장 실패 (무시): ${kvError.message}`)
+        }
+      }
+    } catch (memoryError) {
+      console.error('메모리 저장 오류 (계속 진행):', memoryError)
+    }
+    
     const duration = monitor.end(true)
     
     return c.json({
       success: true,
-      data: { ...customer, id: customerId },
+      data: customerWithId,
       performance: {
         duration_ms: duration,
         is_production: isProductionEnvironment()

@@ -405,19 +405,25 @@ RFP 문서 분석을 위한 기본 정보:
   }
 
   async generateCustomer() {
-    const companyName = document.getElementById('company-name')?.value
+    const companyName = document.getElementById('company-name')?.value || '샘플기업'
     
-    if (!this.deepResearchData || !this.rfpAnalysisData) {
-      alert('딥리서치와 RFP 분석을 먼저 완료해주세요.')
-      return
+    // 데모용: 딥리서치와 RFP 데이터가 없으면 기본값 사용
+    let deepResearchData = this.deepResearchData
+    let rfpAnalysisData = this.rfpAnalysisData
+    
+    if (!deepResearchData || !rfpAnalysisData) {
+      console.log('딥리서치/RFP 데이터가 없어서 데모 데이터를 사용합니다.')
+      // 기본 데모 데이터 생성
+      deepResearchData = { "1": { "name": "기본 비전미션", "content": "혁신과 성장 추구" } }
+      rfpAnalysisData = { "1": { "name": "기본 발주사", "content": companyName } }
     }
 
     try {
       this.showLoading('AI 가상고객 생성 중...')
       
       const response = await axios.post('/api/customers/generate', {
-        deep_research_data: this.deepResearchData,
-        rfp_analysis_data: this.rfpAnalysisData,
+        deep_research_data: deepResearchData,
+        rfp_analysis_data: rfpAnalysisData,
         company_name: companyName,
         department: '경영진'
       })
