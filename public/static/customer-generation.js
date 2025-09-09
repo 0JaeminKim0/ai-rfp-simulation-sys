@@ -16,9 +16,9 @@ class CustomerGenerationApp {
   }
 
   setupEventListeners() {
-    // 딥리서치 시작 버튼
+    // 딥리서치 시작 버튼 (LLM 통합)
     document.getElementById('start-research')?.addEventListener('click', () => {
-      this.startDeepResearch()
+      this.startDemo2DeepResearch()
     })
 
     // 데모 딥리서치 버튼
@@ -46,10 +46,7 @@ class CustomerGenerationApp {
       this.loadDemoCustomerGeneration()
     })
 
-    // Demo2 버튼들 - 실제 LLM 사용
-    document.getElementById('demo2-deep-research')?.addEventListener('click', () => {
-      this.startDemo2DeepResearch()
-    })
+    // Demo2 버튼들 - 실제 LLM 사용 (통합됨)
 
     document.getElementById('demo2-rfp-analysis')?.addEventListener('click', () => {
       this.startDemo2RfpAnalysis()

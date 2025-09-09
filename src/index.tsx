@@ -2638,17 +2638,13 @@ app.get('/customer-generation', (c) => {
                 </div>
 
                 <div class="pwc-flex pwc-flex-mobile-col" style="gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
-                    <button id="start-research" class="pwc-btn pwc-btn-primary">
-                        <i class="fas fa-play"></i>
-                        딥리서치 시작
+                    <button id="start-research" class="pwc-btn" style="background: linear-gradient(135deg, var(--pwc-orange), #ff6b35); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 107, 53, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(255, 107, 53, 0.3)'">
+                        <i class="fas fa-brain" style="margin-right: var(--spacing-xs);"></i>
+                        딥리서치 시작 (AI 분석)
                     </button>
                     <button id="demo-deep-research" class="pwc-btn pwc-btn-secondary">
                         <i class="fas fa-rocket"></i>
                         데모 데이터 로드
-                    </button>
-                    <button id="demo2-deep-research" class="pwc-btn" style="background: linear-gradient(135deg, var(--pwc-orange), #ff6b35); color: white; border: none; font-weight: 600; box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 107, 53, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(255, 107, 53, 0.3)'">
-                        <i class="fas fa-brain" style="margin-right: var(--spacing-xs);"></i>
-                        AI 딥리서치 (실제 LLM)
                     </button>
                 </div>
 
