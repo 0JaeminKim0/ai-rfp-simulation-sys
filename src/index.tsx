@@ -802,52 +802,102 @@ app.post('/api/evaluations/proposal', async (c) => {
       try {
         console.log('🚀 실제 LLM 제안서 평가 시작 (30초 제한)')
         
-        // 고객 페르소나 기반 평가 프롬프트 생성
-        const customerPersona = customer.integrated_persona || {}
-        const evaluationWeights = customerPersona.evaluation_weights || {
-          clarity: 0.15,
-          expertise: 0.25, 
-          persuasiveness: 0.20,
-          logic: 0.20,
-          creativity: 0.10,
-          credibility: 0.10
+        // 30개 속성 고객 페르소나 기반 평가 프롬프트 생성
+        const persona = customer.integrated_persona || {}
+        
+        // 30개 속성을 6개 카테고리로 구조화
+        const personaAnalysis = {
+          // 기본 정보 (5개 속성)
+          basic_info: persona.basic_info || {},
+          // 의사결정 특성 (5개 속성)
+          decision_traits: persona.decision_traits || {},
+          // 핵심 우선순위 (5개 속성)
+          priorities: persona.priorities || {},
+          // 평가 관점 (5개 속성)
+          evaluation_perspective: persona.evaluation_perspective || {},
+          // 우려사항 (5개 속성)
+          concerns: persona.concerns || {},
+          // 평가 가중치 (5개 속성)
+          evaluation_weights: persona.evaluation_weights || {
+            clarity: 0.15, expertise: 0.25, persuasiveness: 0.20,
+            logic: 0.20, creativity: 0.10, credibility: 0.10
+          }
         }
         
-        const prompt = '제안서 평가 전문가로서 다음 제안서를 6개 지표로 평가해주세요.\n\n' +
-          '고객 정보:\n' +
-          '- 회사명: ' + customer.company_name + '\n' +
-          '- 고객 유형: ' + (customer.customer_type || 'CTO') + '\n' +
-          '- 의사결정 스타일: ' + (customerPersona.decision_making_style || '데이터 기반 신중한 판단') + '\n' +
-          '- 주요 관심사: ' + JSON.stringify(customerPersona.top3_priorities || ['기술혁신', '안정성', '비용효율성']) + '\n' +
-          '- 평가 가중치: ' + JSON.stringify(evaluationWeights) + '\n\n' +
-          '제안서 제목: ' + proposal_title + '\n\n' +
-          '제안서 내용:\n' + proposal_content.substring(0, 2000) + '\n\n' +
-          '다음 6개 지표로 각각 1-5점 평가하고 상세한 코멘트를 제공해주세요:\n' +
-          '1. 명확성(Clarity): 제안 내용의 이해도와 구조적 명확성\n' +
-          '2. 전문성(Expertise): 기술적 전문성과 업계 이해도\n' +
-          '3. 설득력(Persuasiveness): 고객 니즈 부합도와 가치 제안력\n' +
-          '4. 논리성(Logic): 논리적 구조와 근거의 타당성\n' +
-          '5. 창의성(Creativity): 혁신적 접근법과 차별화 요소\n' +
-          '6. 신뢰성(Credibility): 실현 가능성과 업체 신뢰도\n\n' +
-          'JSON 응답:\n' +
+        const prompt = '당신은 ' + customer.company_name + '의 ' + (persona.basic_info?.role || 'CTO') + '입니다. ' +
+          '다음은 당신의 상세한 30개 속성 프로필입니다.\n\n' +
+          
+          '=== 고객 30개 속성 페르소나 ===\n' +
+          '【기본 정보 (5개)】\n' +
+          '- 역할: ' + (persona.basic_info?.role || 'CTO') + '\n' +
+          '- 회사: ' + (persona.basic_info?.company || customer.company_name) + '\n' +
+          '- 부서: ' + (persona.basic_info?.department || '기술담당') + '\n' +
+          '- 경력: ' + (persona.basic_info?.experience_years || 12) + '년\n' +
+          '- 결정권: ' + (persona.basic_info?.decision_authority || '핵심영향자') + '\n\n' +
+          
+          '【의사결정 특성 (5개)】\n' +
+          '- 의사결정 스타일: ' + (persona.decision_traits?.style || '기술 검증 중심형') + '\n' +
+          '- 위험 허용도: ' + (persona.decision_traits?.risk_tolerance || '보수적') + '\n' +
+          '- 일정 선호: ' + (persona.decision_traits?.timeline_preference || '단계적 접근') + '\n' +
+          '- 예산 민감도: ' + (persona.decision_traits?.budget_sensitivity || '높음') + '\n' +
+          '- 혁신 개방성: ' + (persona.decision_traits?.innovation_openness || '중간') + '\n\n' +
+          
+          '【핵심 우선순위 (5개)】\n' +
+          '- 1순위: ' + (persona.priorities?.primary || '기술적 안정성과 신뢰성') + '\n' +
+          '- 2순위: ' + (persona.priorities?.secondary || '비용 효율성과 예산 준수') + '\n' +
+          '- 3순위: ' + (persona.priorities?.tertiary || '일정 준수와 리스크 관리') + '\n' +
+          '- 규제준수: ' + (persona.priorities?.compliance || '규제 및 보안 요구사항') + '\n' +
+          '- 확장성: ' + (persona.priorities?.scalability || '확장성과 미래 대응') + '\n\n' +
+          
+          '【평가 관점 (5개)】\n' +
+          '- 기술 깊이: ' + (persona.evaluation_perspective?.technical_depth || '중요') + '\n' +
+          '- 비즈니스 가치: ' + (persona.evaluation_perspective?.business_value || '중요') + '\n' +
+          '- 비용 분석: ' + (persona.evaluation_perspective?.cost_analysis || '중요') + '\n' +
+          '- 구현 계획: ' + (persona.evaluation_perspective?.implementation || '중요') + '\n' +
+          '- 공급업체 신뢰성: ' + (persona.evaluation_perspective?.vendor_reliability || '매우 중요') + '\n\n' +
+          
+          '【주요 우려사항 (5개)】\n' +
+          '- 기술 리스크: ' + (persona.concerns?.technical_risk || '기술적 호환성과 확장성') + '\n' +
+          '- 재무 리스크: ' + (persona.concerns?.financial_risk || '예산 초과 및 숨겨진 비용') + '\n' +
+          '- 일정 리스크: ' + (persona.concerns?.timeline_risk || '프로젝트 일정 지연 리스크') + '\n' +
+          '- 운영 리스크: ' + (persona.concerns?.operational_risk || '기존 시스템 영향도') + '\n' +
+          '- 업체 리스크: ' + (persona.concerns?.vendor_risk || '공급업체 신뢰성과 지원') + '\n\n' +
+          
+          '【평가 가중치 (5개)】\n' +
+          '- 명확성: ' + (personaAnalysis.evaluation_weights.clarity * 100) + '%\n' +
+          '- 전문성: ' + (personaAnalysis.evaluation_weights.expertise * 100) + '%\n' +
+          '- 설득력: ' + (personaAnalysis.evaluation_weights.persuasiveness * 100) + '%\n' +
+          '- 논리성: ' + (personaAnalysis.evaluation_weights.logic * 100) + '%\n' +
+          '- 창의성: ' + (personaAnalysis.evaluation_weights.creativity * 100) + '%\n' +
+          '- 신뢰성: ' + (personaAnalysis.evaluation_weights.credibility * 100) + '%\n\n' +
+          
+          '=== 제안서 평가 ===\n' +
+          '제목: ' + proposal_title + '\n\n' +
+          '내용:\n' + proposal_content.substring(0, 2500) + '\n\n' +
+          
+          '위 30개 속성을 모두 고려하여 다음 6개 지표로 평가해주세요:\n' +
+          '1. 명확성(' + (personaAnalysis.evaluation_weights.clarity * 100) + '%): 나의 ' + (persona.evaluation_perspective?.technical_depth || '기술 관점') + '에서 이해하기 쉬운가?\n' +
+          '2. 전문성(' + (personaAnalysis.evaluation_weights.expertise * 100) + '%): 나의 ' + (persona.priorities?.primary || '핵심 우선순위') + '를 충족하는 전문성인가?\n' +
+          '3. 설득력(' + (personaAnalysis.evaluation_weights.persuasiveness * 100) + '%): 나의 ' + (persona.decision_traits?.style || '의사결정 스타일') + '에 부합하는 설득력인가?\n' +
+          '4. 논리성(' + (personaAnalysis.evaluation_weights.logic * 100) + '%): 나의 ' + (persona.concerns?.technical_risk || '기술 우려사항') + ' 해결에 논리적인가?\n' +
+          '5. 창의성(' + (personaAnalysis.evaluation_weights.creativity * 100) + '%): 나의 ' + (persona.decision_traits?.innovation_openness || '혁신 성향') + ' 수준에 적합한가?\n' +
+          '6. 신뢰성(' + (personaAnalysis.evaluation_weights.credibility * 100) + '%): 나의 ' + (persona.decision_traits?.risk_tolerance || '위험 허용도') + ' 성향에 안전한가?\n\n' +
+          
+          'JSON 응답 (1-5점, 가중치 적용 총점):\n' +
           JSON.stringify({
             scores: {
-              clarity: { score: 4, comment: "구체적인 평가 코멘트" },
-              expertise: { score: 4, comment: "구체적인 평가 코멘트" },
-              persuasiveness: { score: 4, comment: "구체적인 평가 코멘트" },
-              logic: { score: 4, comment: "구체적인 평가 코멘트" },
-              creativity: { score: 4, comment: "구체적인 평가 코멘트" },
-              credibility: { score: 4, comment: "구체적인 평가 코멘트" }
+              clarity: { score: 4, comment: "30개 속성 중 평가 관점과 우선순위를 반영한 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              expertise: { score: 4, comment: "전문성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              persuasiveness: { score: 4, comment: "설득력 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              logic: { score: 4, comment: "논리성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              creativity: { score: 4, comment: "창의성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              credibility: { score: 4, comment: "신뢰성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" }
             },
-            total_score: 80,
-            overall_feedback: "종합 평가 코멘트 (100자 이상)",
-            key_strengths: ["강점1", "강점2", "강점3"],
-            improvement_areas: ["개선점1", "개선점2", "개선점3"],
-            decision_factors: {
-              matches_priorities: "고객 우선순위와의 부합도",
-              risk_assessment: "위험도 평가",
-              implementation_confidence: "실현 가능성 평가"
-            }
+            weighted_total_score: 82,
+            persona_feedback: "30개 속성 페르소나 관점에서의 종합 피드백",
+            priority_alignment: "핵심 우선순위 5개와의 부합도 분석",
+            concern_mitigation: "주요 우려사항 5개 해소 정도",
+            decision_recommendation: "의사결정 특성에 따른 추천도"
           }, null, 2)
 
         const openai = new ChunkedOpenAIService(env.OPENAI_API_KEY)
