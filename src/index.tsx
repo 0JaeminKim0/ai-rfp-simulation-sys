@@ -1365,20 +1365,55 @@ app.get('/api/evaluations/integrated/:id', async (c) => {
 
 // 4.1 통합 결과 생성 API
 app.post('/api/evaluations/integrate', async (c) => {
+  console.log('🚀 통합 평가 API 시작')
   try {
-    const { customer_id, proposal_evaluation_id, presentation_evaluation_id, project_title } = await c.req.json()
+    const requestData = await c.req.json()
+    console.log('📨 요청 데이터:', requestData)
+    const { customer_id, proposal_evaluation_id, presentation_evaluation_id, project_title } = requestData
     const { env } = c
     
     const storage = new JsonStorageService(env.KV)
     
-    // 제안서/발표 평가 데이터 로드
-    const proposalEval = proposal_evaluation_id ? await storage.getProposalEvaluation(proposal_evaluation_id) : null
-    const presentationEval = presentation_evaluation_id ? await storage.getPresentationEvaluation(presentation_evaluation_id) : null
+    // 제안서/발표 평가 데이터 로드 (Railway 환경에서는 메모리 스토어 우선 사용)
+    let proposalEval = null
+    let presentationEval = null
+    
+    if (proposal_evaluation_id) {
+      // 메모리 스토어에서 먼저 확인
+      const proposalKey = `evaluation:${proposal_evaluation_id}`
+      console.log(`🔍 제안서 평가 조회 시도: ${proposalKey}`)
+      console.log(`📦 메모리 스토어 키들:`, Array.from(globalMemoryStore.keys()).filter(k => k.includes('eval')))
+      
+      if (globalMemoryStore.has(proposalKey)) {
+        proposalEval = globalMemoryStore.get(proposalKey)
+        console.log('✅ 메모리에서 제안서 평가 발견')
+      } else {
+        console.log('❌ 메모리에서 제안서 평가 미발견')
+        console.log('🔧 KV 스토리지 메소드 존재 여부:', typeof storage.getProposalEvaluation)
+        // KV 스토리지는 일단 스킵하고 null로 처리
+        proposalEval = null
+      }
+    }
+    
+    if (presentation_evaluation_id) {
+      // 메모리 스토어에서 먼저 확인
+      const presentationKey = `evaluation:${presentation_evaluation_id}`
+      if (globalMemoryStore.has(presentationKey)) {
+        presentationEval = globalMemoryStore.get(presentationKey)
+      } else {
+        console.log('❌ 메모리에서 발표 평가 미발견')
+        // KV 스토리지는 일단 스킵하고 null로 처리
+        presentationEval = null
+      }
+    }
     
     let integratedResult
     
-    if (env.OPENAI_API_KEY) {
+    console.log('🔧 OPENAI_API_KEY 상태:', env.OPENAI_API_KEY ? 'EXISTS' : 'NOT_SET')
+    
+    if (env.OPENAI_API_KEY && env.OPENAI_API_KEY.startsWith('sk-')) {
       // LLM 기반 실제 통합
+      console.log('🚀 LLM 경로로 진행')
       const llmEvaluation = new LLMEvaluationService(
         env.OPENAI_API_KEY,
         env.KV
@@ -1392,6 +1427,7 @@ app.post('/api/evaluations/integrate', async (c) => {
       )
       console.log('LLM 통합 결과 생성 완료')
     } else {
+      console.log('🔧 기본 통합 경로로 진행')
       // 기본 통합 결과
       const proposalScore = proposalEval?.total_score || 0
       const presentationScore = presentationEval?.total_score || 0
@@ -1407,16 +1443,20 @@ app.post('/api/evaluations/integrate', async (c) => {
           proposal_weighted: Math.round(proposalScore * 0.7),
           presentation_weighted: Math.round(presentationScore * 0.3)
         },
-        strengths: ['전문성 우수', '신뢰도 높음', '체계적 접근'],
-        improvements: ['창의적 요소 보강', '설득력 향상', '차별화 요소 추가'],
-        overall_feedback: `전문성과 신뢰도 측면에서 우수한 평가를 받았습니다. 창의적 요소와 차별화 전략을 보강하면 더욱 경쟁력 있는 제안이 될 것입니다. (최종 점수: ${finalScore}점)`,
+        strengths: extractActualStrengths(proposalEval, presentationEval),
+        improvements: extractActualImprovements(proposalEval, presentationEval),
+        overall_feedback: generateActualOverallFeedback(proposalEval, presentationEval, finalScore),
         created_at: new Date().toISOString()
       }
       console.log('기본 통합 결과 생성 완료')
     }
     
-    // 결과 저장
-    const resultId = await storage.saveIntegratedEvaluation(integratedResult)
+    // 결과 저장 (Railway 환경에서는 메모리 저장)
+    const resultId = crypto.randomUUID()
+    integratedResult.id = resultId
+    const resultKey = `integrated:${resultId}`
+    globalMemoryStore.set(resultKey, integratedResult)
+    console.log(`✅ 통합 결과 저장 완료: ${resultId}`)
     
     return c.json({
       success: true,
@@ -3979,15 +4019,13 @@ app.get('/results', (c) => {
                     </h2>
                 </div>
                 <div class="pwc-card-content">
-                    <div style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
+                    <div style="display: flex; flex-direction: column; gap: var(--spacing-lg);" id="dynamic-feedback-container">
                         <div class="pwc-alert pwc-alert-success" style="padding: var(--spacing-lg); border-radius: var(--border-radius-md);">
                             <h3 style="font-weight: 600; color: var(--success-color); margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-sm);">
                                 <i class="fas fa-thumbs-up"></i>강점
                             </h3>
-                            <p style="color: var(--success-color); line-height: 1.6; word-break: keep-all;">
-                                화학산업 전문성과 글로벌 ESG 대응 역량이 뛰어나며, 
-                                안정적이고 체계적인 실행 방안을 제시했습니다. 
-                                PwC의 브랜드 신뢰도와 실현가능성이 높게 평가됩니다.
+                            <p style="color: var(--success-color); line-height: 1.6; word-break: keep-all;" id="feedback-strengths">
+                                평가 데이터를 로드하는 중입니다...
                             </p>
                         </div>
                         
@@ -3995,10 +4033,8 @@ app.get('/results', (c) => {
                             <h3 style="font-weight: 600; color: var(--warning-color); margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-sm);">
                                 <i class="fas fa-lightbulb"></i>개선 사항
                             </h3>
-                            <p style="color: var(--warning-color); line-height: 1.6; word-break: keep-all;">
-                                창의적이고 혁신적인 차별화 요소를 더 강화하면 좋겠습니다. 
-                                기술적 세부사항의 명확성을 높이고, 
-                                더욱 구체적인 실행 타임라인을 제시해주세요.
+                            <p style="color: var(--warning-color); line-height: 1.6; word-break: keep-all;" id="feedback-improvements">
+                                평가 데이터를 로드하는 중입니다...
                             </p>
                         </div>
                         
@@ -4006,10 +4042,8 @@ app.get('/results', (c) => {
                             <h3 style="font-weight: 600; color: var(--info-color); margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-sm);">
                                 <i class="fas fa-star"></i>총평
                             </h3>
-                            <p style="color: var(--info-color); line-height: 1.6; word-break: keep-all;">
-                                금호석유화학의 ESG 경영과 DX 니즈를 정확히 파악한 우수한 제안입니다. 
-                                화학산업 전문성과 글로벌 경험을 바탕으로 한 안정적 실행력이 돋보이며, 
-                                장기적 파트너십 구축에 적합한 신뢰할 수 있는 제안으로 평가됩니다.
+                            <p style="color: var(--info-color); line-height: 1.6; word-break: keep-all;" id="feedback-summary">
+                                평가 데이터를 로드하는 중입니다...
                             </p>
                         </div>
                     </div>
@@ -4214,6 +4248,9 @@ app.get('/results', (c) => {
                 
                 // Update radar chart with actual data
                 updateRadarChart(proposalData?.scores, presentationData?.scores);
+                
+                // Update dynamic feedback based on actual evaluation data
+                updateDynamicFeedback(proposalData, presentationData, finalScore);
             }
             
             function updateDetailedScores(type, scores) {
@@ -4403,6 +4440,121 @@ app.get('/results', (c) => {
                 }
             }
             
+            function updateDynamicFeedback(proposalData, presentationData, finalScore) {
+                console.log('[통합결과] Updating dynamic feedback with actual evaluation data');
+                
+                // 실제 AI 평가 피드백 추출
+                let actualStrengths = [];
+                let actualImprovements = [];
+                let actualSummary = '';
+                
+                // 제안서 평가에서 피드백 추출
+                if (proposalData) {
+                    if (proposalData.key_strengths && Array.isArray(proposalData.key_strengths)) {
+                        actualStrengths.push(...proposalData.key_strengths.map(s => `[제안서] ${s}`));
+                    }
+                    if (proposalData.improvement_areas && Array.isArray(proposalData.improvement_areas)) {
+                        actualImprovements.push(...proposalData.improvement_areas.map(s => `[제안서] ${s}`));
+                    }
+                    if (proposalData.overall_feedback) {
+                        actualSummary = proposalData.overall_feedback;
+                    }
+                    if (proposalData.persona_feedback) {
+                        actualSummary += actualSummary ? ' ' + proposalData.persona_feedback : proposalData.persona_feedback;
+                    }
+                }
+                
+                // 발표 평가에서 피드백 추출  
+                if (presentationData) {
+                    if (presentationData.key_strengths && Array.isArray(presentationData.key_strengths)) {
+                        actualStrengths.push(...presentationData.key_strengths.map(s => `[발표] ${s}`));
+                    }
+                    if (presentationData.improvement_areas && Array.isArray(presentationData.improvement_areas)) {
+                        actualImprovements.push(...presentationData.improvement_areas.map(s => `[발표] ${s}`));
+                    }
+                    if (presentationData.overall_feedback) {
+                        if (actualSummary) {
+                            actualSummary += ' 발표 측면에서는 ' + presentationData.overall_feedback;
+                        } else {
+                            actualSummary = presentationData.overall_feedback;
+                        }
+                    }
+                }
+                
+                // 점수 기반 보완 피드백 (AI 피드백이 부족한 경우)
+                if (actualStrengths.length === 0 && proposalData && presentationData) {
+                    // 높은 점수 지표들을 강점으로 추출
+                    const scores = {
+                        clarity: (proposalData.scores?.clarity?.score || 0 + presentationData.scores?.clarity?.score || 0) / 2,
+                        expertise: (proposalData.scores?.expertise?.score || 0 + presentationData.scores?.expertise?.score || 0) / 2,
+                        persuasiveness: (proposalData.scores?.persuasiveness?.score || 0 + presentationData.scores?.persuasiveness?.score || 0) / 2,
+                        logic: (proposalData.scores?.logic?.score || 0 + presentationData.scores?.logic?.score || 0) / 2,
+                        creativity: (proposalData.scores?.creativity?.score || 0 + presentationData.scores?.creativity?.score || 0) / 2,
+                        reliability: (proposalData.scores?.reliability?.score || 0 + presentationData.scores?.reliability?.score || 0) / 2
+                    };
+                    
+                    if (scores.expertise >= 85) actualStrengths.push('뛰어난 전문성과 도메인 지식을 보여줍니다');
+                    if (scores.reliability >= 85) actualStrengths.push('높은 신뢰성과 실현 가능성을 갖춘 제안입니다');
+                    if (scores.clarity >= 80) actualStrengths.push('명확하고 체계적인 구성으로 이해하기 쉽습니다');
+                    if (scores.logic >= 80) actualStrengths.push('논리적이고 체계적인 접근을 통해 설득력을 갖췄습니다');
+                    if (scores.persuasiveness >= 80) actualStrengths.push('고객 관점에서 설득력 있는 가치 제안을 제시했습니다');
+                }
+                
+                if (actualImprovements.length === 0 && proposalData && presentationData) {
+                    const scores = {
+                        creativity: (proposalData.scores?.creativity?.score || 0 + presentationData.scores?.creativity?.score || 0) / 2,
+                        clarity: (proposalData.scores?.clarity?.score || 0 + presentationData.scores?.clarity?.score || 0) / 2,
+                        persuasiveness: (proposalData.scores?.persuasiveness?.score || 0 + presentationData.scores?.persuasiveness?.score || 0) / 2
+                    };
+                    
+                    if (scores.creativity < 75) actualImprovements.push('더욱 창의적이고 혁신적인 차별화 요소 강화가 필요합니다');
+                    if (scores.clarity < 75) actualImprovements.push('핵심 메시지 전달의 명확성을 개선할 수 있습니다');
+                    if (scores.persuasiveness < 75) actualImprovements.push('고객 맞춤형 설득력을 더욱 강화해보세요');
+                }
+                
+                // 총평 생성 (점수 기반)
+                if (!actualSummary) {
+                    if (finalScore >= 90) {
+                        actualSummary = '매우 우수한 제안으로 고객의 요구사항을 정확히 파악하고 전문적인 해결방안을 제시했습니다.';
+                    } else if (finalScore >= 80) {
+                        actualSummary = '전반적으로 우수한 제안이며, 고객의 니즈를 잘 이해하고 적절한 솔루션을 제안했습니다.';
+                    } else if (finalScore >= 70) {
+                        actualSummary = '양호한 수준의 제안으로 기본적인 요구사항을 충족하고 있습니다.';
+                    } else if (finalScore >= 60) {
+                        actualSummary = '기본적인 요구사항은 충족하나, 일부 영역에서 추가적인 보완이 필요합니다.';
+                    } else {
+                        actualSummary = '개선이 필요한 영역들이 있으며, 추가적인 검토와 보완이 권장됩니다.';
+                    }
+                }
+                
+                // UI 업데이트
+                const strengthsElement = document.getElementById('feedback-strengths');
+                const improvementsElement = document.getElementById('feedback-improvements');  
+                const summaryElement = document.getElementById('feedback-summary');
+                
+                if (strengthsElement) {
+                    strengthsElement.textContent = actualStrengths.length > 0 ? 
+                        actualStrengths.join(', ') : 
+                        '전반적으로 기본적인 요구사항을 충족하는 수준입니다.';
+                }
+                
+                if (improvementsElement) {
+                    improvementsElement.textContent = actualImprovements.length > 0 ? 
+                        actualImprovements.join(', ') : 
+                        '현재 수준에서 세부적인 완성도 향상을 권장합니다.';
+                }
+                
+                if (summaryElement) {
+                    summaryElement.textContent = actualSummary;
+                }
+                
+                console.log('[통합결과] Dynamic feedback updated:', {
+                    strengths: actualStrengths.length,
+                    improvements: actualImprovements.length,
+                    hasSummary: !!actualSummary
+                });
+            }
+            
             function showErrorMessage(message) {
                 const errorDiv = document.createElement('div');
                 errorDiv.style.cssText = `
@@ -4426,6 +4578,118 @@ app.get('/results', (c) => {
     </html>
   `)
 })
+
+// 실제 평가 데이터 추출 헬퍼 함수들
+function extractActualStrengths(proposalEval: any, presentationEval: any): string[] {
+  const strengths: string[] = []
+  
+  // 제안서 평가에서 강점 추출
+  if (proposalEval?.key_strengths && Array.isArray(proposalEval.key_strengths)) {
+    strengths.push(...proposalEval.key_strengths.map((s: string) => `[제안서] ${s}`))
+  }
+  
+  // 발표 평가에서 강점 추출  
+  if (presentationEval?.key_strengths && Array.isArray(presentationEval.key_strengths)) {
+    strengths.push(...presentationEval.key_strengths.map((s: string) => `[발표] ${s}`))
+  }
+  
+  // 점수 기반 보완 강점 (AI 피드백이 없는 경우)
+  if (strengths.length === 0) {
+    const proposalScores = proposalEval?.scores || {}
+    const presentationScores = presentationEval?.scores || {}
+    
+    if ((proposalScores.expertise?.score || 0) >= 85 || (presentationScores.expertise?.score || 0) >= 85) {
+      strengths.push('뛰어난 전문성과 도메인 지식')
+    }
+    if ((proposalScores.reliability?.score || 0) >= 85 || (presentationScores.reliability?.score || 0) >= 85) {
+      strengths.push('높은 신뢰성과 실현가능성')
+    }
+    if ((proposalScores.clarity?.score || 0) >= 80 || (presentationScores.clarity?.score || 0) >= 80) {
+      strengths.push('명확하고 체계적인 구성')
+    }
+    
+    if (strengths.length === 0) {
+      strengths.push('기본적인 요구사항 충족')
+    }
+  }
+  
+  return strengths.slice(0, 5) // 최대 5개로 제한
+}
+
+function extractActualImprovements(proposalEval: any, presentationEval: any): string[] {
+  const improvements: string[] = []
+  
+  // 제안서 평가에서 개선점 추출
+  if (proposalEval?.improvement_areas && Array.isArray(proposalEval.improvement_areas)) {
+    improvements.push(...proposalEval.improvement_areas.map((s: string) => `[제안서] ${s}`))
+  }
+  
+  // 발표 평가에서 개선점 추출
+  if (presentationEval?.improvement_areas && Array.isArray(presentationEval.improvement_areas)) {
+    improvements.push(...presentationEval.improvement_areas.map((s: string) => `[발표] ${s}`))
+  }
+  
+  // 점수 기반 보완 개선점 (AI 피드백이 없는 경우)
+  if (improvements.length === 0) {
+    const proposalScores = proposalEval?.scores || {}
+    const presentationScores = presentationEval?.scores || {}
+    
+    if ((proposalScores.creativity?.score || 0) < 75 && (presentationScores.creativity?.score || 0) < 75) {
+      improvements.push('창의적 차별화 요소 강화')
+    }
+    if ((proposalScores.clarity?.score || 0) < 75 && (presentationScores.clarity?.score || 0) < 75) {
+      improvements.push('핵심 메시지 명확성 개선')
+    }
+    if ((proposalScores.persuasiveness?.score || 0) < 75 && (presentationScores.persuasiveness?.score || 0) < 75) {
+      improvements.push('고객 맞춤 설득력 강화')
+    }
+    
+    if (improvements.length === 0) {
+      improvements.push('세부적인 완성도 향상')
+    }
+  }
+  
+  return improvements.slice(0, 5) // 최대 5개로 제한
+}
+
+function generateActualOverallFeedback(proposalEval: any, presentationEval: any, finalScore: number): string {
+  let feedback = ''
+  
+  // 실제 AI 피드백 우선 사용
+  if (proposalEval?.overall_feedback) {
+    feedback = proposalEval.overall_feedback
+  }
+  
+  if (presentationEval?.overall_feedback) {
+    if (feedback) {
+      feedback += ' 발표 측면에서는 ' + presentationEval.overall_feedback
+    } else {
+      feedback = presentationEval.overall_feedback
+    }
+  }
+  
+  // 페르소나 피드백 추가
+  if (proposalEval?.persona_feedback) {
+    feedback += feedback ? ' ' + proposalEval.persona_feedback : proposalEval.persona_feedback
+  }
+  
+  // AI 피드백이 없으면 점수 기반 피드백 생성
+  if (!feedback) {
+    if (finalScore >= 90) {
+      feedback = '매우 우수한 제안으로 고객의 요구사항을 정확히 파악하고 전문적인 해결방안을 제시했습니다.'
+    } else if (finalScore >= 80) {
+      feedback = '전반적으로 우수한 제안이며, 고객의 니즈를 잘 이해하고 적절한 솔루션을 제안했습니다.'
+    } else if (finalScore >= 70) {
+      feedback = '양호한 수준의 제안으로 기본적인 요구사항을 충족하고 있습니다.'
+    } else if (finalScore >= 60) {
+      feedback = '기본적인 요구사항은 충족하나, 일부 영역에서 추가적인 보완이 필요합니다.'
+    } else {
+      feedback = '개선이 필요한 영역들이 있으며, 추가적인 검토와 보완이 권장됩니다.'
+    }
+  }
+  
+  return feedback + ` (최종 점수: ${finalScore}점)`
+}
 
 // RFP 분석 헬퍼 함수
 function generateBasicRfpAnalysis(extractedText: string, fileName: string) {

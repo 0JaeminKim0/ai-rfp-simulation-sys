@@ -371,16 +371,11 @@ export class JsonStorageService {
   /**
    * 통합 평가 결과 저장
    */
-  async saveIntegratedEvaluation(
-    sessionId: string,
-    evaluation: Omit<IntegratedEvaluation, 'id' | 'evaluation_date'>
-  ): Promise<string> {
-    
-    const evaluationId = crypto.randomUUID()
-    const evaluationData: IntegratedEvaluation = {
+  async saveIntegratedEvaluation(evaluation: any): Promise<string> {
+    const evaluationId = evaluation.id || crypto.randomUUID()
+    const evaluationData = {
       id: evaluationId,
-      session_id: sessionId,
-      evaluation_date: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       ...evaluation
     }
     
@@ -391,7 +386,6 @@ export class JsonStorageService {
         await this.kvNamespace.put(key, JSON.stringify(evaluationData), {
           metadata: {
             type: 'integrated_evaluation',
-            session_id: sessionId,
             final_score: evaluation.final_score
           }
         })
@@ -411,6 +405,93 @@ export class JsonStorageService {
   // =====================================================
   // 평가 결과 조회
   // =====================================================
+
+  /**
+   * 제안서 평가 결과 조회 (ID로)
+   */
+  async getProposalEvaluation(evaluationId: string): Promise<ProposalEvaluation | null> {
+    const key = `proposal_eval:${evaluationId}`
+    
+    try {
+      // 로컬 캐시 확인
+      if (this.localCache.has(key)) {
+        return this.localCache.get(key)
+      }
+      
+      // KV 스토리지에서 조회
+      if (this.kvNamespace) {
+        const data = await this.kvNamespace.get(key, 'json')
+        if (data) {
+          this.localCache.set(key, data) // 캐시에 저장
+          return data as ProposalEvaluation
+        }
+      }
+      
+      return null
+      
+    } catch (error) {
+      console.error('제안서 평가 조회 실패:', error)
+      return null
+    }
+  }
+
+  /**
+   * 발표 평가 결과 조회 (ID로)
+   */
+  async getPresentationEvaluation(evaluationId: string): Promise<PresentationEvaluation | null> {
+    const key = `presentation_eval:${evaluationId}`
+    
+    try {
+      // 로컬 캐시 확인
+      if (this.localCache.has(key)) {
+        return this.localCache.get(key)
+      }
+      
+      // KV 스토리지에서 조회
+      if (this.kvNamespace) {
+        const data = await this.kvNamespace.get(key, 'json')
+        if (data) {
+          this.localCache.set(key, data) // 캐시에 저장
+          return data as PresentationEvaluation
+        }
+      }
+      
+      return null
+      
+    } catch (error) {
+      console.error('발표 평가 조회 실패:', error)
+      return null
+    }
+  }
+
+  /**
+   * 통합 평가 결과 조회 (ID로)
+   */
+  async getIntegratedEvaluation(evaluationId: string): Promise<IntegratedEvaluation | null> {
+    const key = `integrated_eval:${evaluationId}`
+    
+    try {
+      // 로컬 캐시 확인
+      if (this.localCache.has(key)) {
+        return this.localCache.get(key)
+      }
+      
+      // KV 스토리지에서 조회
+      if (this.kvNamespace) {
+        const data = await this.kvNamespace.get(key, 'json')
+        if (data) {
+          this.localCache.set(key, data) // 캐시에 저장
+          return data as IntegratedEvaluation
+        }
+      }
+      
+      return null
+      
+    } catch (error) {
+      console.error('통합 평가 조회 실패:', error)
+      return null
+    }
+  }
 
   /**
    * 세션별 모든 평가 결과 조회
