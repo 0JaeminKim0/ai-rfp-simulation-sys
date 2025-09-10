@@ -1109,7 +1109,7 @@ app.post('/api/evaluations/proposal', async (c) => {
               persuasiveness: { score: 82, comment: "설득력 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
               logic: { score: 87, comment: "논리성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
               creativity: { score: 78, comment: "창의성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
-              credibility: { score: 90, comment: "신뢰성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" }
+              reliability: { score: 90, comment: "신뢰성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" }
             },
             total_score: 85,
             overall_feedback: "30개 속성 페르소나 관점에서의 종합 평가 (2-3문장)",
@@ -1171,7 +1171,7 @@ app.post('/api/evaluations/proposal', async (c) => {
         persuasiveness: { score: 75, comment: `${customerType}의 주요 관심사에 더 집중된 가치 제안이 필요합니다.` },
         logic: { score: 80, comment: '논리적 흐름과 근거 제시가 체계적입니다.' },
         creativity: { score: 75, comment: '혁신적 접근법을 더 강화하면 경쟁력이 높아질 것입니다.' },
-        credibility: { score: 80, comment: '제안 내용의 실현 가능성과 업체 신뢰도가 양호합니다.' }
+        reliability: { score: 80, comment: '제안 내용의 실현 가능성과 업체 신뢰도가 양호합니다.' }
       }
       
       // 고객 페르소나 특성 반영 조정 (100점 체계)
@@ -1181,8 +1181,8 @@ app.post('/api/evaluations/proposal', async (c) => {
       }
       
       if (customerPersona.risk_appetite?.includes('보수')) {
-        baseScores.credibility.score = Math.min(100, baseScores.credibility.score + 10)
-        baseScores.credibility.comment = '안정성과 검증된 방법론을 중시하는 고객에게 적합한 신뢰도를 보여줍니다.'
+        baseScores.reliability.score = Math.min(100, baseScores.reliability.score + 10)
+        baseScores.reliability.comment = '안정성과 검증된 방법론을 중시하는 고객에게 적합한 신뢰도를 보여줍니다.'
       }
       
       if (customerPersona.budget_sensitivity?.includes('효율') || customerPersona.budget_sensitivity?.includes('민감')) {
@@ -1197,7 +1197,7 @@ app.post('/api/evaluations/proposal', async (c) => {
          baseScores.persuasiveness.score * 0.20 + 
          baseScores.logic.score * 0.20 + 
          baseScores.creativity.score * 0.10 + 
-         baseScores.credibility.score * 0.10)
+         baseScores.reliability.score * 0.10)
       )
       
       proposalEvaluation = {
@@ -1314,7 +1314,7 @@ app.post('/api/evaluations/presentation', async (c) => {
           persuasiveness: { score: 80, comment: '고객의 니즈를 정확히 파악하고 해결방안을 논리적으로 제시했습니다.' },
           logic: { score: 80, comment: '논리적 흐름이 체계적이고 근거가 타당합니다.' },
           creativity: { score: 60, comment: '안정적이고 검증된 접근법이지만, 혁신적이고 차별화된 아이디어가 더 필요합니다.' },
-          credibility: { score: 100, comment: 'PwC의 브랜드 신뢰도와 화학산업 프로젝트 경험이 매우 신뢰할 만합니다.' }
+          reliability: { score: 100, comment: 'PwC의 브랜드 신뢰도와 화학산업 프로젝트 경험이 매우 신뢰할 만합니다.' }
         },
         total_score: 83,
         overall_feedback: '화학산업 전문성과 ESG 대응 역량이 우수하며, 체계적이고 실현가능한 실행 계획을 제시했습니다. 발표 스킬 면에서는 명확한 전달력을 보였나, 더욱 창의적이고 혁신적인 차별화 요소를 강화하면 경쟁력이 높아질 것입니다. 전반적으로 신뢰할 수 있는 우수한 발표였습니다.',
