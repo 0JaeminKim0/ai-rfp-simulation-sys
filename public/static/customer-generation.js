@@ -223,7 +223,21 @@ class CustomerGenerationApp {
       })
 
       if (response.data.success) {
+        console.log('🔥 RFP 분석 API 응답 성공:', response.data)
+        console.log('🔍 분석된 데이터 구조:', Object.keys(response.data.data))
+        console.log('🎯 첫 번째 속성 샘플:', response.data.data["1"])
+        
         this.rfpAnalysisData = response.data.data
+        
+        // 데이터 검증
+        const dataCount = Object.keys(this.rfpAnalysisData).length
+        console.log(`📊 총 ${dataCount}개 속성 로드됨`)
+        
+        // 각 속성의 content 확인
+        Object.entries(this.rfpAnalysisData).forEach(([key, attr]) => {
+          console.log(`${key}: ${attr.name} = "${attr.content}"`)
+        })
+        
         this.displayRfpResults()
         this.checkGenerationReady()
         
@@ -233,10 +247,11 @@ class CustomerGenerationApp {
           const currentContent = detailsDiv.innerHTML
           detailsDiv.innerHTML = currentContent.replace(
             /파일 업로드 완료.*세요/,
-            '✅ LLM AI 분석 완료 - 15개 속성 추출 완료'
+            `✅ LLM AI 분석 완료 - ${dataCount}개 속성 추출 완료`
           )
         }
       } else {
+        console.error('🚨 RFP 분석 API 응답 실패:', response.data)
         throw new Error(response.data.error || 'RFP AI 분석 실패')
       }
     } catch (error) {
@@ -288,19 +303,34 @@ RFP 문서 분석을 위한 기본 정보:
   }
 
   displayRfpResults() {
+    console.log('🖥️ displayRfpResults 시작')
     const container = document.getElementById('rfp-attributes')
     const resultsDiv = document.getElementById('rfp-results')
     
-    if (!container || !this.rfpAnalysisData) return
+    console.log('📋 UI 요소 확인:', { 
+      container: !!container, 
+      resultsDiv: !!resultsDiv, 
+      rfpData: !!this.rfpAnalysisData 
+    })
+    
+    if (!container || !this.rfpAnalysisData) {
+      console.warn('⚠️ UI 요소 또는 데이터 누락')
+      return
+    }
 
     resultsDiv.style.display = 'block'
     container.innerHTML = ''
 
+    console.log(`🎨 ${Object.keys(this.rfpAnalysisData).length}개 카드 생성 시작`)
+    
     // 15개 속성 카드 생성
     Object.values(this.rfpAnalysisData).forEach((attr, index) => {
+      console.log(`🃏 카드 ${index + 1} 생성:`, attr.name, '=', attr.content)
       const card = this.createAttributeCard(attr, 'rfp')
       container.appendChild(card)
     })
+    
+    console.log('✅ RFP 결과 표시 완료')
   }
 
   createAttributeCard(attribute, type) {
