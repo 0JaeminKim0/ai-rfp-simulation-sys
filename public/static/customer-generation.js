@@ -1127,32 +1127,57 @@ RFP 문서 분석을 위한 기본 정보:
         companyNameInput.value = companyName
       }
       
+      console.log('🚀 [프론트엔드] 딥리서치 API 호출 시작:', companyName)
+      console.log('🔗 [프론트엔드] API URL: /api/demo2/deep-research')
+      
+      const startTime = Date.now()
       const response = await axios.post('/api/demo2/deep-research', {
         company_name: companyName
       })
+      const responseTime = Date.now() - startTime
+      
+      console.log('⏱️ [프론트엔드] API 응답 시간:', responseTime + 'ms')
+      console.log('📈 [프론트엔드] 응답 데이터:', response.data)
       
       if (response.data.success) {
         this.deepResearchData = response.data.data
         
         // 디버깅 로그 추가
-        console.log('🔍 LLM 딥리서치 데이터:', this.deepResearchData)
-        console.log('🔍 첫 번째 속성:', this.deepResearchData[1] || this.deepResearchData['1'])
+        console.log('📅 [프론트엔드] LLM 딥리서치 데이터 수신 내역:')
+        console.log('- 회사명:', this.deepResearchData.company_name)
+        console.log('- 데이터 속성 수:', Object.keys(this.deepResearchData.deep_research_data || {}).length)
+        console.log('- 전체 데이터 길이:', this.deepResearchData.total_content_length)
+        console.log('- 분석 방법:', this.deepResearchData.data_sources)
+        console.log('- 첫 번째 속성:', this.deepResearchData.deep_research_data['1'] || '없음')
+        console.log('📈 [프론트엔드] 전체 딥리서치 데이터:', this.deepResearchData)
         
         this.displayResearchResults()
         this.currentStep = 2
         this.updateProgressBar()
         this.checkGenerationReady()
         
+        console.log('✅ [프론트엔드] 딥리서치 성공 완료!', {
+          회사명: companyName,
+          응답시간: responseTime + 'ms',
+          속성수: Object.keys(this.deepResearchData.deep_research_data || {}).length,
+          분석방법: this.deepResearchData.data_sources ? this.deepResearchData.data_sources[0] : 'Unknown'
+        })
+        
         this.showSuccessMessage(`🎉 ${companyName} AI 딥리서치 완료! 실제 GPT-4o가 15가지 핵심 속성을 분석했습니다.`)
       } else {
         throw new Error(response.data.error || 'AI 딥리서치 실패')
       }
     } catch (error) {
-      console.error('Demo2 딥리서치 오류:', error)
+      console.error('❌ [프론트엔드] Demo2 딥리서치 오류:')
+      console.error('- 오류 메시지:', error.message)
+      console.error('- 오류 상세:', error)
+      console.error('- API 응답:', error.response?.data)
+      console.error('- HTTP 상태 코드:', error.response?.status)
       
       // 400 에러 (API 키 문제)일 때 fallback으로 회사명 맞춤형 데모 데이터 사용
       if (error.response && error.response.status === 400) {
-        console.log(`🔄 Fallback: ${companyName} 맞춤형 데모 데이터로 진행`)
+        console.log(`🔄 [프론트엔드] Fallback 모드 전환: ${companyName} 맞춤형 데모 데이터로 진행`)
+        console.warn('⚠️ [프론트엔드] OpenAI API 키 문제로 데모 모드 실행')
         
         try {
           // 회사명을 반영한 데모 딥리서치 데이터 생성
