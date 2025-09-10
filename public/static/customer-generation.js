@@ -261,12 +261,14 @@ class CustomerGenerationApp {
           console.log(`${key}: ${attr.name} = "${attr.content}"`)
         })
         
-        // LLM vs 폴백 분석 결과 판단
-        const isLLMAnalysis = this.detectLLMAnalysis(this.rfpAnalysisData)
-        console.log(`🧠 분석 방식: ${isLLMAnalysis ? 'LLM 분석 성공' : 'NLP/폴백 분석'}`)
+        // 백엔드에서 전달된 analysis_method 확인
+        const analysisMethod = response.data.analysis_method
+        const isLLMAnalysis = analysisMethod === 'LLM'
+        
+        console.log(`🧠 [RFP] 분석 방식: ${isLLMAnalysis ? 'LLM 분석 성공 ✅' : 'NLP 폴백 분석 📋'} (${analysisMethod})`)
         
         if (isLLMAnalysis) {
-          console.log('✅ 실제 GPT-4o 분석 결과를 받았습니다!')
+          console.log('🎯 실제 GPT-4o RFP 분석 결과를 받았습니다!')
         } else {
           console.log('⚠️ LLM 분석 실패로 폴백 데이터를 사용했습니다.')
         }

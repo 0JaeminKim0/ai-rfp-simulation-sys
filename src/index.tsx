@@ -497,29 +497,34 @@ app.post('/api/customers/rfp-analysis', async (c) => {
     const storage = env.KV ? new JsonStorageService(env.KV) : null
     
     let rfpAnalysisData
+    let usedLLM = false
     const isUnbound = isWorkersUnbound()
+    
+    console.log(`🚀 RFP 분석 모드: ${env.OPENAI_API_KEY ? 'LLM 시도' : 'API 키 없음 - NLP 폴백만'} (텍스트: ${extractedText.length}자)`)
     
     if (env.OPENAI_API_KEY && extractedText.length > 50) {
       // 🔥 NEW: 분할 처리 RFP 분석 - 3단계 순차 처리로 30초 이내 보장
-      console.log(`🚀 분할 처리 RFP 분석 시작 (25초 제한)`)
+      console.log(`🚀 RFP LLM 분석 시작: ${fileName} (25초 제한)`)
       
       try {
         const chunkedOpenAI = new ChunkedOpenAIService(env.OPENAI_API_KEY, isUnbound)
         rfpAnalysisData = await chunkedOpenAI.generateRfpAnalysisChunked(extractedText, fileName)
-        console.log(`🎯 분할 처리 RFP 15속성 분석 완료`)
+        usedLLM = true
+        console.log(`🎯 [RFP] LLM 분석 성공: ${fileName} - 실제 GPT-4o 사용됨 (15개 속성)`)
       } catch (llmError) {
-        console.error('분할 처리 RFP 분석 실패, NLP로 폴백:', llmError)
+        console.log(`📋 [RFP] LLM 실패, NLP 폴백 사용: ${fileName} - 이유: ${llmError.message}`)
         rfpAnalysisData = await generateNLPRfpAnalysis(extractedText, fileName)
       }
     } else if (extractedText.length > 50) {
       // 📋 NLP 기반 RFP 파싱만 (OpenAI API 없을 때)
-      console.log('📋 NLP 기반 RFP 파싱 실행')
+      console.log(`📋 [RFP] API 키 없음 - NLP 폴백 분석 실행: ${fileName}`)
       rfpAnalysisData = generateBasicRfpAnalysis(extractedText, fileName)
-      console.log('NLP RFP 파싱 완료')
+      console.log(`📋 [RFP] NLP 폴백 분석 완료: ${fileName}`)
     } else {
       // 기본 분석 (텍스트가 너무 짧을 때)
+      console.log(`📋 [RFP] 텍스트 부족 - 기본 분석 실행: ${fileName}`)
       rfpAnalysisData = generateBasicRfpAnalysis(extractedText, fileName)
-      console.log('기본 RFP 분석 완료')
+      console.log(`📋 [RFP] 기본 분석 완료: ${fileName}`)
     }
     
     // RFP 분석 결과 검증
@@ -566,7 +571,11 @@ app.post('/api/customers/rfp-analysis', async (c) => {
       success: true,
       data: rfpAnalysisData, // 실제 분석 데이터 반환
       rfp_analysis_result: analysisResult, // 전체 결과 객체
-      storage_key: storageKey
+      storage_key: storageKey,
+      analysis_method: usedLLM ? 'LLM' : 'NLP_FALLBACK',
+      message: usedLLM ? 
+        `🎯 RFP LLM 분석 완료: ${fileName} (GPT-4o 사용)` : 
+        `📋 RFP NLP 분석 완료: ${fileName} (폴백 데이터)`
     })
     
   } catch (error) {
