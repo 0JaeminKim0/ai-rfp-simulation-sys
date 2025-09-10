@@ -4595,6 +4595,12 @@ app.get('/results', (c) => {
                     updateDetailedScores('presentation', presentationScores);
                 }
                 
+                // Calculate and update difference values and averages
+                if (proposalScores && presentationScores) {
+                    updateScoreDifferences(proposalScores, presentationScores);
+                    updateAverageScores(proposalScores, presentationScores);
+                }
+                
                 // Update radar chart with available data (actual or demo)
                 if (proposalScores && presentationScores) {
                     updateRadarChart(proposalScores, presentationScores);
@@ -4676,8 +4682,61 @@ app.get('/results', (c) => {
                     
                     const diffElement = document.getElementById(type + '-diff');
                     if (diffElement) {
-                        diffElement.textContent = diff.toFixed(1);
+                        diffElement.textContent = diff.toFixed(1) + '점';
+                        
+                        // Style based on difference magnitude
+                        if (diff <= 5) {
+                            diffElement.style.color = 'var(--success-color)';
+                            diffElement.innerHTML = diff.toFixed(1) + '점 <i class="fas fa-check-circle" style="margin-left: 4px;"></i>';
+                        } else if (diff <= 10) {
+                            diffElement.style.color = 'var(--warning-color)';
+                            diffElement.innerHTML = diff.toFixed(1) + '점 <i class="fas fa-exclamation-circle" style="margin-left: 4px;"></i>';
+                        } else {
+                            diffElement.style.color = 'var(--error-color)';
+                            diffElement.innerHTML = diff.toFixed(1) + '점 <i class="fas fa-times-circle" style="margin-left: 4px;"></i>';
+                        }
                     }
+                });
+            }
+            
+            function updateAverageScores(proposalScores, presentationScores) {
+                if (!proposalScores || !presentationScores) return;
+                
+                const scoreTypes = ['clarity', 'expertise', 'persuasiveness', 'logic', 'creativity', 'reliability'];
+                
+                // Calculate averages
+                let proposalTotal = 0;
+                let presentationTotal = 0;
+                let count = 0;
+                
+                scoreTypes.forEach(type => {
+                    const proposalScore = proposalScores[type]?.score || 0;
+                    const presentationScore = presentationScores[type]?.score || 0;
+                    
+                    if (proposalScore > 0 || presentationScore > 0) {
+                        proposalTotal += proposalScore;
+                        presentationTotal += presentationScore;
+                        count++;
+                    }
+                });
+                
+                const proposalAverage = count > 0 ? (proposalTotal / count).toFixed(1) : 0;
+                const presentationAverage = count > 0 ? (presentationTotal / count).toFixed(1) : 0;
+                
+                // Update UI elements
+                const proposalAvgElement = document.getElementById('proposal-average-score');
+                const presentationAvgElement = document.getElementById('presentation-average-score');
+                
+                if (proposalAvgElement) {
+                    proposalAvgElement.textContent = proposalAverage + '점';
+                }
+                
+                if (presentationAvgElement) {
+                    presentationAvgElement.textContent = presentationAverage + '점';
+                }
+                
+                console.log('[통합결과] 평균 점수 업데이트:', { 
+                    proposalAverage, presentationAverage, count, proposalTotal, presentationTotal 
                 });
             }
             
