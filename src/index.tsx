@@ -2392,20 +2392,36 @@ app.post('/api/demo/evaluate-proposal', async (c) => {
 app.post('/api/demo/evaluate-presentation', async (c) => {
   try {
     const { customer_id } = await c.req.json()
-    const db = new DatabaseService(c.env.DB)
     
+    console.log('[데모 발표 평가 실행] KHNP 발표 평가 데이터 생성 중...');
     const demoPresentationEval = DemoDataService.getSamplePresentationEvaluation()
-    demoPresentationEval.customer_id = customer_id
+    demoPresentationEval.customer_id = customer_id || 'demo-customer'
     
-    // 데이터베이스에 저장
-    const evaluationId = await db.savePresentationEvaluation(demoPresentationEval)
+    // 데이터베이스 저장은 선택적으로 처리 (Railway 환경에서는 globalMemoryStore 사용)
+    let evaluationId = 'demo-presentation-eval-' + Date.now()
+    
+    try {
+      // 데이터베이스가 있는 경우 저장 시도
+      if (c.env && c.env.DB) {
+        const db = new DatabaseService(c.env.DB)
+        evaluationId = await db.savePresentationEvaluation(demoPresentationEval)
+      } else {
+        // Railway 환경용 globalMemoryStore 저장
+        globalMemoryStore.set(`presentation_evaluation:${evaluationId}`, demoPresentationEval)
+        console.log('[데모 발표 평가] globalMemoryStore에 저장됨:', evaluationId)
+      }
+    } catch (dbError) {
+      console.warn('[데모 발표 평가] DB 저장 실패, 메모리 저장 사용:', dbError.message)
+      globalMemoryStore.set(`presentation_evaluation:${evaluationId}`, demoPresentationEval)
+    }
     
     return c.json({
       success: true,  
       data: { ...demoPresentationEval, id: evaluationId },
-      message: "데모 발표 평가가 완료되었습니다"
+      message: "데모 발표 평가가 완료되었습니다 (KHNP 수력양수 발전)"
     })
   } catch (error) {
+    console.error('[데모 발표 평가] 오류:', error)
     return c.json({
       success: false,
       error: error.message
