@@ -1142,14 +1142,23 @@ RFP 문서 분석을 위한 기본 정보:
       if (response.data.success) {
         this.deepResearchData = response.data.data
         
-        // 디버깅 로그 추가
+        // 디버깅 로그 추가 (API 응답 구조 맞춤)
         console.log('📅 [프론트엔드] LLM 딥리서치 데이터 수신 내역:')
-        console.log('- 회사명:', this.deepResearchData.company_name)
-        console.log('- 데이터 속성 수:', Object.keys(this.deepResearchData.deep_research_data || {}).length)
-        console.log('- 전체 데이터 길이:', this.deepResearchData.total_content_length)
-        console.log('- 분석 방법:', this.deepResearchData.data_sources)
-        console.log('- 첫 번째 속성:', this.deepResearchData.deep_research_data['1'] || '없음')
+        console.log('- 회사명:', companyName)
+        console.log('- 데이터 속성 수:', Object.keys(this.deepResearchData || {}).length)
+        // 안전한 데이터 접근
+        const firstAttr = this.deepResearchData['1']
+        const firstContent = typeof firstAttr === 'string' ? firstAttr : (firstAttr?.content || '없음')
+        
+        console.log('- 첫 번째 속성:', firstContent)
+        console.log('- 다섯 번째 속성:', typeof this.deepResearchData['5'] === 'string' ? this.deepResearchData['5'] : this.deepResearchData['5']?.content)
+        console.log('- 열 번째 속성:', typeof this.deepResearchData['10'] === 'string' ? this.deepResearchData['10'] : this.deepResearchData['10']?.content)
         console.log('📈 [프론트엔드] 전체 딥리서치 데이터:', this.deepResearchData)
+        console.log('🔍 [프론트엔드] 데이터 구조 분석:', {
+          키_목록: Object.keys(this.deepResearchData),
+          값_타입: typeof this.deepResearchData['1'],
+          샘플_값: this.deepResearchData['1']?.substring(0, 50) + '...'
+        })
         
         this.displayResearchResults()
         this.currentStep = 2
@@ -1159,8 +1168,9 @@ RFP 문서 분석을 위한 기본 정보:
         console.log('✅ [프론트엔드] 딥리서치 성공 완료!', {
           회사명: companyName,
           응답시간: responseTime + 'ms',
-          속성수: Object.keys(this.deepResearchData.deep_research_data || {}).length,
-          분석방법: this.deepResearchData.data_sources ? this.deepResearchData.data_sources[0] : 'Unknown'
+          속성수: Object.keys(this.deepResearchData || {}).length,
+          API_타입: 'demo2/deep-research',
+          첫번째_속성: (typeof this.deepResearchData['1'] === 'string' ? this.deepResearchData['1'] : this.deepResearchData['1']?.content || '없음').substring(0, 30) + '...'
         })
         
         this.showSuccessMessage(`🎉 ${companyName} AI 딥리서치 완료! 실제 GPT-4o가 15가지 핵심 속성을 분석했습니다.`)
