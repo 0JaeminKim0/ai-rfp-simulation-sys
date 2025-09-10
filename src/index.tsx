@@ -4332,25 +4332,24 @@ app.get('/results', (c) => {
                 let actualProposalScore = proposalScore;
                 let actualPresentationScore = presentationScore;
                 
-                // Use demo data if no actual data available, but still display UI
+                // Handle missing data with demo fallback
                 if (!hasAnyData) {
-                    console.warn('[통합결과] No actual evaluation data available - using demo data for display');
-                    showErrorMessage('실제 평가 데이터가 없습니다. 아래는 데모 데이터입니다. 실제 결과를 보려면 제안서 평가와 발표 평가를 먼저 완료해 주세요.');
-                    // Use demo scores for UI display
+                    console.warn('[통합결과] No data available, using demo');
+                    showErrorMessage('데모 데이터를 표시합니다.');
                     actualProposalScore = 83;
                     actualPresentationScore = 78;
-                } else if (!hasProposalData || !hasPresentationData) {
-                    // Show warning for partial data but continue with available data + demo for missing
-                    if (!hasProposalData) {
-                        console.warn('[통합결과] Missing proposal evaluation data - using demo data');
-                        showErrorMessage('제안서 평가 데이터가 누락되어 데모 데이터를 사용합니다. 정확한 결과를 위해 제안서 평가를 완료해 주세요.');
-                        actualProposalScore = 83; // Demo score for missing proposal
-                    }
-                    if (!hasPresentationData) {
-                        console.warn('[통합결과] Missing presentation evaluation data - using demo data');
-                        showErrorMessage('발표 평가 데이터가 누락되어 데모 데이터를 사용합니다. 정확한 결과를 위해 발표 평가를 완료해 주세요.');
-                        actualPresentationScore = 78; // Demo score for missing presentation
-                    }
+                }
+                
+                if (!hasProposalData && hasAnyData) {
+                    console.warn('[통합결과] Proposal data not found');
+                    showErrorMessage('제안서 평가 데이터 누락');
+                    actualProposalScore = 83;
+                }
+                
+                if (!hasPresentationData && hasAnyData) {
+                    console.warn('[통합결과] Presentation data not found');
+                    showErrorMessage('발표 평가 데이터 누락');
+                    actualPresentationScore = 78;
                 }
                 
                 // Calculate weighted scores (70% proposal + 30% presentation)
