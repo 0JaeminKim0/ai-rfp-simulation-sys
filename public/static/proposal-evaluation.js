@@ -391,7 +391,9 @@ class ProposalEvaluationApp {
     document.getElementById('persuasiveness-score').textContent = this.evaluationResult.scores.persuasiveness.score + '점'
     document.getElementById('logic-score').textContent = this.evaluationResult.scores.logic.score + '점'
     document.getElementById('creativity-score').textContent = this.evaluationResult.scores.creativity.score + '점'
-    document.getElementById('reliability-score').textContent = this.evaluationResult.scores.reliability.score + '점'
+    // Support both reliability and credibility for backward compatibility
+    const reliabilityScore = this.evaluationResult.scores.reliability || this.evaluationResult.scores.credibility;
+    document.getElementById('reliability-score').textContent = reliabilityScore.score + '점'
     
     // 총점 표시 (100점 만점)
     document.getElementById('total-score').textContent = Math.round(this.evaluationResult.total_score) + '점'

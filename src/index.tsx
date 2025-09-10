@@ -1381,7 +1381,7 @@ app.post('/api/demo/presentation-evaluation', async (c) => {
         score: 65,
         comment: "안정적이고 검증된 접근법이지만, 혁신적이고 차별화된 아이디어가 더 필요합니다. 창의적인 솔루션 요소를 추가하면 경쟁력이 높아질 것입니다."
       },
-      credibility: {
+      reliability: {
         score: 91,
         comment: "PwC의 브랜드 신뢰도와 화학산업 프로젝트 경험, 단계적 실행 방안이 매우 신뢰할 만합니다."
       }
