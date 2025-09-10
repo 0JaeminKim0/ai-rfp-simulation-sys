@@ -4386,7 +4386,7 @@ app.get('/results', (c) => {
                     // If no URL parameters, directly show demo data
                     if (!proposalEvaluationId && !presentationEvaluationId && !customerId) {
                         console.log('[통합결과] No URL parameters - showing demo data');
-                        updateIntegratedResultsUI(null, null);
+                        updateIntegratedResultsUI(null, null, null);
                         return;
                     }
                     
@@ -4413,18 +4413,18 @@ app.get('/results', (c) => {
                     }
                     
                     // Update UI with loaded data
-                    updateIntegratedResultsUI(proposalData, presentationData);
+                    updateIntegratedResultsUI(proposalData, presentationData, customerId);
                     
                 } catch (error) {
                     console.error('[통합결과] Error loading evaluation data:', error);
                     console.log('[통합결과] Using demo data due to error');
                     // Still update UI with null data (will use demo data)
-                    updateIntegratedResultsUI(null, null);
+                    updateIntegratedResultsUI(null, null, customerId);
                 }
             }
             
-            function updateIntegratedResultsUI(proposalData, presentationData) {
-                console.log('[통합결과] Updating UI with data:', { proposalData, presentationData });
+            function updateIntegratedResultsUI(proposalData, presentationData, customerId) {
+                console.log('[통합결과] Updating UI with data:', { proposalData, presentationData, customerId });
                 
                 // Calculate scores (100-point system) - Use actual data only
                 const proposalScore = proposalData?.total_score || 0;
