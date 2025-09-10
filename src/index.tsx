@@ -4037,26 +4037,7 @@ app.get('/results', (c) => {
                                     </div>
                                 </div>
                                 
-                                <!-- 지표별 성과 분석 -->
-                                <div style="background: linear-gradient(135deg, var(--pwc-gray-100), var(--pwc-white)); border-radius: var(--radius-md); padding: var(--spacing-lg); border: 2px solid var(--pwc-orange-light); box-shadow: var(--shadow-md);">
-                                    <h4 style="font-weight: 600; color: var(--pwc-navy); margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-sm); border-bottom: 2px solid var(--pwc-orange-light); padding-bottom: var(--spacing-sm);">
-                                        <i class="fas fa-chart-line" style="color: var(--pwc-orange);"></i>성과 분석
-                                    </h4>
-                                    <ul style="display: flex; flex-direction: column; gap: var(--spacing-md); font-size: 0.95rem; color: var(--text-color);">
-                                        <li style="display: flex; align-items: center; gap: var(--spacing-sm); word-break: keep-all; background: var(--pwc-success-light); padding: var(--spacing-sm); border-radius: var(--radius-sm); border-left: 4px solid var(--pwc-success);">
-                                            <i class="fas fa-trophy" style="color: var(--pwc-success); font-size: 1.1rem;"></i>
-                                            <strong style="color: var(--pwc-navy);">최고 점수:</strong> <span style="color: var(--pwc-success); font-weight: 600;">전문성, 신뢰성 (100점)</span>
-                                        </li>
-                                        <li style="display: flex; align-items: center; gap: var(--spacing-sm); word-break: keep-all; background: var(--pwc-warning-light); padding: var(--spacing-sm); border-radius: var(--radius-sm); border-left: 4px solid var(--pwc-warning);">
-                                            <i class="fas fa-exclamation-triangle" style="color: var(--pwc-warning); font-size: 1.1rem;"></i>
-                                            <strong style="color: var(--pwc-navy);">개선 필요:</strong> <span style="color: var(--pwc-warning); font-weight: 600;">창의성 (60점)</span>
-                                        </li>
-                                        <li style="display: flex; align-items: center; gap: var(--spacing-sm); word-break: keep-all; background: var(--pwc-info-light); padding: var(--spacing-sm); border-radius: var(--radius-sm); border-left: 4px solid var(--pwc-info);">
-                                            <i class="fas fa-balance-scale" style="color: var(--pwc-info); font-size: 1.1rem;"></i>
-                                            <strong style="color: var(--pwc-navy);">평가 일관성:</strong> <span style="color: var(--pwc-info); font-weight: 600;">제안서와 발표 점수 차이 없음</span>
-                                        </li>
-                                    </ul>
-                                </div>
+
                             </div>
                         </div>
                     </div>
