@@ -4385,7 +4385,29 @@ app.get('/results', (c) => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const proposalEvaluationId = urlParams.get('proposal_evaluation_id');
                 const presentationEvaluationId = urlParams.get('presentation_evaluation_id');
-                const customerId = urlParams.get('customer_id');
+                let customerId = urlParams.get('customer_id');
+                
+                // If customerId is not in URL params, try to get from localStorage or find latest customer
+                if (!customerId) {
+                    customerId = localStorage.getItem('current_customer_id');
+                    console.log('[통합결과] Customer ID from localStorage:', customerId);
+                    
+                    // If still no customerId, try to find the latest customer from API
+                    if (!customerId) {
+                        try {
+                            const response = await fetch('/api/customers');
+                            const result = await response.json();
+                            if (result.success && result.data && result.data.length > 0) {
+                                // Get the most recent customer
+                                const latestCustomer = result.data[result.data.length - 1];
+                                customerId = latestCustomer.id || latestCustomer.customer_id;
+                                console.log('[통합결과] Using latest customer ID:', customerId);
+                            }
+                        } catch (error) {
+                            console.warn('[통합결과] Failed to fetch latest customer:', error);
+                        }
+                    }
+                }
                 
                 console.log('[통합결과] Loading data with:', { proposalEvaluationId, presentationEvaluationId, customerId });
                 
