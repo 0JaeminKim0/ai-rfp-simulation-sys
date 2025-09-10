@@ -4133,7 +4133,7 @@ app.get('/results', (c) => {
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
 
-                        alert('리포트가 성공적으로 생성되었습니다!\\n\\n새 창에서 인쇄 가능하며, HTML 파일도 다운로드됩니다.');
+                        alert('리포트가 성공적으로 생성되었습니다!\n\n새 창에서 인쇄 가능하며, HTML 파일도 다운로드됩니다.');
                     } else {
                         throw new Error(result.error);
                     }

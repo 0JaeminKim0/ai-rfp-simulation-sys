@@ -46,7 +46,7 @@
     "@hono/vite-dev-server": "^0.18.2",
     "@types/node": "^20.0.0",
     "typescript": "^5.9.2",
-    "vite": "^6.3.5",
+    "vite": "^6.3.6",
     "wrangler": "^3.78.0"
   }
 }
