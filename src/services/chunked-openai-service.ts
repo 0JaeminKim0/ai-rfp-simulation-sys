@@ -13,9 +13,15 @@ export class ChunkedOpenAIService {
   private readonly isUnbound: boolean
 
   constructor(apiKey: string, isUnbound = false) {
-    console.log(`🔐 ChunkedOpenAI 서비스 초기화: sk-***${apiKey.slice(-6)}, Unbound: ${isUnbound}`)
+    console.log(`🔐 [ChunkedOpenAI] 서비스 초기화 시작`)
+    console.log(`🔑 [ChunkedOpenAI] API 키: sk-***${apiKey.slice(-6)} (길이: ${apiKey.length})`)
+    console.log(`⚙️ [ChunkedOpenAI] Workers Unbound: ${isUnbound ? '✅ 활성화' : '❌ 비활성화'}`)
+    console.log(`⏰ [ChunkedOpenAI] 타임아웃 설정: ${this.maxTimeout}ms`)
+    
     this.openai = new OpenAI({ apiKey })
     this.isUnbound = isUnbound
+    
+    console.log(`✅ [ChunkedOpenAI] 서비스 초기화 완료`)
   }
 
   /**
@@ -29,7 +35,8 @@ export class ChunkedOpenAIService {
     return new Promise(async (resolve) => {
       // 25초 타임아웃 설정
       const timeout = setTimeout(() => {
-        console.log(`⚠️ ${description} 25초 타임아웃, fallback 사용`)
+        console.log(`⏰ [ChunkedOpenAI] 타임아웃 발생: ${description}`)
+        console.log(`⚠️ [ChunkedOpenAI] 25초 제한 초과 - 폴백 데이터 사용`)
         resolve(fallback)
       }, this.maxTimeout)
 
@@ -39,7 +46,13 @@ export class ChunkedOpenAIService {
         resolve(result)
       } catch (error) {
         clearTimeout(timeout)
-        console.error(`❌ ${description} 실패:`, error.message)
+        console.error(`❌ [ChunkedOpenAI] API 호출 실패: ${description}`)
+        console.error(`🔍 [ChunkedOpenAI] 오류 상세:`, {
+          error_message: error.message,
+          error_type: error.constructor.name,
+          description
+        })
+        console.log(`🔄 [ChunkedOpenAI] 폴백 데이터로 대체`)
         resolve(fallback)
       }
     })
@@ -49,27 +62,57 @@ export class ChunkedOpenAIService {
    * 딥리서치 분할 생성 - 5개씩 3그룹으로 병렬 처리
    */
   async generateDeepResearchChunked(companyName: string): Promise<DeepResearchData> {
-    console.log(`🚀 딥리서치 분할 생성 시작: ${companyName}`)
+    console.log(`🚀 [ChunkedOpenAI] 딥리서치 분할 생성 시작: ${companyName}`)
+    console.log(`📋 [ChunkedOpenAI] 처리 계획:`, {
+      그룹_1: '기본_정보 (1-5번)',
+      그룹_2: '전략_정보 (6-10번)',
+      그룹_3: '운영_정보 (11-15번)',
+      처리_방식: '병렬_처리'
+    })
 
+    const startTime = Date.now()
+    
     // 그룹 1: 기본 정보 (1-5번)
+    console.log(`💡 [ChunkedOpenAI] 그룹 1 시작: 기본 정보 수집`)
     const group1Promise = this.generateResearchGroup1(companyName)
     
     // 그룹 2: 전략 정보 (6-10번)  
+    console.log(`🎯 [ChunkedOpenAI] 그룹 2 시작: 전략 정보 수집`)
     const group2Promise = this.generateResearchGroup2(companyName)
     
     // 그룹 3: 운영 정보 (11-15번)
+    console.log(`⚙️ [ChunkedOpenAI] 그룹 3 시작: 운영 정보 수집`)
     const group3Promise = this.generateResearchGroup3(companyName)
 
     // 병렬 처리로 모든 그룹 실행
+    console.log(`⏳ [ChunkedOpenAI] 3그룹 병렬 실행 시작...`)
     const [group1, group2, group3] = await Promise.all([
       group1Promise,
       group2Promise, 
       group3Promise
     ])
+    
+    const processingTime = Date.now() - startTime
+    console.log(`⏱️ [ChunkedOpenAI] 병렬 처리 완료: ${processingTime}ms`)
+
+    // 결과 통합 내역 로그
+    console.log(`📈 [ChunkedOpenAI] 그룹별 결과:`, {
+      그룹_1_속성수: Object.keys(group1).length,
+      그룹_2_속성수: Object.keys(group2).length,
+      그룹_3_속성수: Object.keys(group3).length,
+      총_속성수: Object.keys(group1).length + Object.keys(group2).length + Object.keys(group3).length
+    })
 
     // 결과 통합
     const result: DeepResearchData = { ...group1, ...group2, ...group3 }
-    console.log(`✅ 딥리서치 분할 생성 완료 (3그룹 병렬 처리)`)
+    
+    console.log(`✅ [ChunkedOpenAI] 딥리서치 분할 생성 완료!`)
+    console.log(`🏆 [ChunkedOpenAI] 최종 결과:`, {
+      총_속성수: Object.keys(result).length,
+      처리시간: processingTime + 'ms',
+      회사명: companyName,
+      성공_여부: '✅'
+    })
     
     return result
   }
@@ -106,17 +149,29 @@ JSON 응답:
         response_format: { type: "json_object" }
       })
 
+      const apiTime = Date.now() - startTime
+      console.log(`⏱️ [Group1] API 응답 시간: ${apiTime}ms`)
+      console.log(`📝 [Group1] 응답 토큰 사용량: ${response.usage?.total_tokens || 'N/A'}`)
+      
       const content = response.choices[0].message.content
       if (!content) throw new Error('GPT-4o 응답이 비어있습니다')
       
-      return JSON.parse(content)
-    }, fallback, '딥리서치 그룹1')
+      const jsonResponse = JSON.parse(content)
+      console.log(`✅ [Group1] JSON 파싱 성공, 속성 수: ${Object.keys(jsonResponse).length}`)
+      
+      return jsonResponse
+    }, fallback, '딥리서치 그룹1').then(result => {
+      console.log(`🏆 [Group1] 처리 완료: ${Object.keys(result).length}개 속성 생성`)
+      return result
+    })
   }
 
   /**
    * 그룹 2: 전략 정보 (6-10번) - 간결한 프롬프트
    */
   private async generateResearchGroup2(companyName: string) {
+    console.log(`🎯 [Group2] 전략 정보 그룹 처리 시작: ${companyName}`)
+    
     const prompt = `${companyName} 기업 전략 정보 5개를 간결하게 분석해주세요 (각 30자 이내):
 
 6. ESG 우선순위
@@ -136,7 +191,13 @@ JSON 응답:
 
     const fallback = this.createFallbackGroup2(companyName)
     
+    console.log(`🗺️ [Group2] 프롬프트 길이: ${prompt.length}자`)
+    console.log(`🎯 [Group2] 목표 속성: ESG, 리스크관리, 글로벌지향성, 고객성향, 디지털전환`)
+    
     return this.safeAPICall(async () => {
+      console.log(`🚀 [Group2] OpenAI API 호출 시작 (gpt-4o)`)
+      const startTime = Date.now()
+      
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
@@ -144,18 +205,30 @@ JSON 응답:
         max_tokens: 800,
         response_format: { type: "json_object" }
       })
+      
+      const apiTime = Date.now() - startTime
+      console.log(`⏱️ [Group2] API 응답 시간: ${apiTime}ms`)
+      console.log(`📝 [Group2] 응답 토큰 사용량: ${response.usage?.total_tokens || 'N/A'}`)
 
       const content = response.choices[0].message.content
       if (!content) throw new Error('GPT-4o 응답이 비어있습니다')
       
-      return JSON.parse(content)
-    }, fallback, '딥리서치 그룹2')
+      const jsonResponse = JSON.parse(content)
+      console.log(`✅ [Group2] JSON 파싱 성공, 속성 수: ${Object.keys(jsonResponse).length}`)
+      
+      return jsonResponse
+    }, fallback, '딥리서치 그룹2').then(result => {
+      console.log(`🏆 [Group2] 처리 완료: ${Object.keys(result).length}개 속성 생성`)
+      return result
+    })
   }
 
   /**
    * 그룹 3: 운영 정보 (11-15번) - 간결한 프롬프트  
    */
   private async generateResearchGroup3(companyName: string) {
+    console.log(`⚙️ [Group3] 운영 정보 그룹 처리 시작: ${companyName}`)
+    
     const prompt = `${companyName} 기업 운영 정보 5개를 간결하게 분석해주세요 (각 30자 이내):
 
 11. 조직문화·HR 방향
@@ -175,7 +248,13 @@ JSON 응답:
 
     const fallback = this.createFallbackGroup3(companyName)
     
+    console.log(`🗺️ [Group3] 프롬프트 길이: ${prompt.length}자`)
+    console.log(`🎯 [Group3] 목표 속성: 조직문화, 파트너십, 규제대응, 브랜드톤, 목표균형`)
+    
     return this.safeAPICall(async () => {
+      console.log(`🚀 [Group3] OpenAI API 호출 시작 (gpt-4o)`)
+      const startTime = Date.now()
+      
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
@@ -183,12 +262,22 @@ JSON 응답:
         max_tokens: 800,
         response_format: { type: "json_object" }
       })
+      
+      const apiTime = Date.now() - startTime
+      console.log(`⏱️ [Group3] API 응답 시간: ${apiTime}ms`)
+      console.log(`📝 [Group3] 응답 토큰 사용량: ${response.usage?.total_tokens || 'N/A'}`)
 
       const content = response.choices[0].message.content
       if (!content) throw new Error('GPT-4o 응답이 비어있습니다')
       
-      return JSON.parse(content)
-    }, fallback, '딥리서치 그룹3')
+      const jsonResponse = JSON.parse(content)
+      console.log(`✅ [Group3] JSON 파싱 성공, 속성 수: ${Object.keys(jsonResponse).length}`)
+      
+      return jsonResponse
+    }, fallback, '딥리서치 그룹3').then(result => {
+      console.log(`🏆 [Group3] 처리 완료: ${Object.keys(result).length}개 속성 생성`)
+      return result
+    })
   }
 
   /**

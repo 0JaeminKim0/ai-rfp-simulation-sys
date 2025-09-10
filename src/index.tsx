@@ -272,13 +272,32 @@ app.post('/api/customers/deep-research', async (c) => {
     let researchData
     const isUnbound = isWorkersUnbound()
     
+    console.log(`🔍 환경 확인 - OpenAI API Key: ${env.OPENAI_API_KEY ? '✅ 존재 (sk-***' + env.OPENAI_API_KEY.slice(-6) + ')' : '❌ 없음'}`)
+    console.log(`🔍 Workers Unbound: ${isUnbound ? '✅ 활성화' : '❌ 비활성화'}`)
+    
     if (env.OPENAI_API_KEY) {
       try {
-        console.log(`🚀 분할 처리 딥리서치 시작: ${request.company_name}`)
+        console.log(`🚀 [딥리서치] 분할 처리 시작: ${request.company_name}`)
+        console.log(`📊 [딥리서치] 요청 옵션:`, {
+          company_name: request.company_name,
+          research_depth: request.research_depth,
+          isUnbound,
+          timestamp: new Date().toISOString()
+        })
         
         // 🔥 NEW: 분할 처리로 30초 이내 보장 - 3그룹 병렬 처리
         const chunkedOpenAI = new ChunkedOpenAIService(env.OPENAI_API_KEY, isUnbound)
+        console.log(`⚙️ [딥리서치] ChunkedOpenAI 서비스 인스턴스 생성 완료`)
+        
+        const startTime = Date.now()
         const deepResearchData = await chunkedOpenAI.generateDeepResearchChunked(request.company_name)
+        const processingTime = Date.now() - startTime
+        
+        console.log(`⏱️ [딥리서치] LLM 처리 시간: ${processingTime}ms`)
+        console.log(`📈 [딥리서치] 생성된 데이터 구조:`, Object.keys(deepResearchData))
+        console.log(`📝 [딥리서치] 각 속성별 데이터 길이:`, Object.entries(deepResearchData).map(([key, value]) => `${key}: ${value.content?.length || 0}자`))
+        
+        const totalContentLength = Object.values(deepResearchData).reduce((sum, attr) => sum + attr.content.length, 0)
         
         researchData = {
           company_name: request.company_name,
@@ -286,13 +305,28 @@ app.post('/api/customers/deep-research', async (c) => {
           deep_research_data: deepResearchData,
           collection_timestamp: new Date().toISOString(),
           data_sources: [`GPT-4o 분할 처리: ${request.company_name}`],
-          total_content_length: Object.values(deepResearchData).reduce((sum, attr) => sum + attr.content.length, 0)
+          total_content_length: totalContentLength
         }
         
-        console.log(`🎯 분할 처리 딥리서치 완료: ${researchData.total_content_length}자 분석`)
+        console.log(`🎯 [딥리서치] LLM 분석 완료!`)
+        console.log(`📊 [딥리서치] 최종 결과 통계:`, {
+          총_글자수: totalContentLength,
+          속성_개수: Object.keys(deepResearchData).length,
+          처리_시간: processingTime + 'ms',
+          평균_속성_길이: Math.round(totalContentLength / Object.keys(deepResearchData).length) + '자',
+          분석_방법: 'GPT-4o 분할처리'
+        })
+        console.log(`✅ [딥리서치] 성공적으로 완료: ${request.company_name}`)
         
       } catch (openaiError) {
-        console.error('OpenAI 분석 실패, 기본 분석으로 전환:', openaiError)
+        console.error(`❌ [딥리서치] OpenAI 분석 실패: ${request.company_name}`)
+        console.error(`🔍 [딥리서치] 오류 상세:`, {
+          error_message: openaiError.message,
+          error_type: openaiError.constructor.name,
+          timestamp: new Date().toISOString(),
+          company_name: request.company_name
+        })
+        console.log(`🔄 [딥리서치] 폴백 모드로 전환: 기본 분석 시작`)
         
         // Fallback: 기본 분석
         researchData = {
@@ -322,7 +356,12 @@ app.post('/api/customers/deep-research', async (c) => {
       }
     } else {
       // OpenAI API 키 없을 때 기본 분석
-      console.log('OpenAI API 키 없음 - 기본 분석 실행')
+      console.log(`⚠️ [딥리서치] OpenAI API 키 없음 - 기본 분석 모드로 실행`)
+      console.log(`📋 [딥리서치] 기본 분석 정보:`, {
+        company_name: request.company_name,
+        mode: '기본_템플릿',
+        timestamp: new Date().toISOString()
+      })
       
       researchData = {
         company_name: request.company_name,
@@ -368,7 +407,16 @@ app.post('/api/customers/deep-research', async (c) => {
     }
     
     const duration = monitor.end(true)
-    console.log(`딥리서치 완료: ${researchData.total_content_length}자 분석 (${duration}ms)`)
+    
+    console.log(`🏁 [딥리서치] 전체 프로세스 완료!`)
+    console.log(`📈 [딥리서치] 최종 성능 지표:`, {
+      전체_처리시간: duration + 'ms',
+      분석_글자수: researchData.total_content_length,
+      분석_방법: researchData.data_sources[0],
+      사용된_API: env.OPENAI_API_KEY ? 'OpenAI GPT-4o' : '기본 템플릿',
+      성공_여부: '✅ 성공',
+      회사명: request.company_name
+    })
     
     return c.json({
       success: true,
