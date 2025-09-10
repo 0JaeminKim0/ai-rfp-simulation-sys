@@ -1693,6 +1693,16 @@ app.post('/api/generate-comprehensive-feedback', async (c) => {
 - 전문성 수준: ${personaInfo.expertise_level}
 - 의사결정 요인: ${personaInfo.decision_factors.join(', ')}
 
+## 제안서 내용
+- 제목: ${proposal_data?.title || '제목 없음'}
+- 요약: ${proposal_data?.summary || '요약 없음'}
+- 주요 내용: ${proposal_data?.content || '내용 없음'}
+- 기술 접근법: ${proposal_data?.technical_approach || '기술 접근법 없음'}
+- 프로젝트 계획: ${proposal_data?.project_plan || '프로젝트 계획 없음'}
+- 비용 제안: ${proposal_data?.cost_proposal || '비용 제안 없음'}
+- 위험 관리: ${proposal_data?.risk_management || '위험 관리 없음'}
+- 품질 보증: ${proposal_data?.quality_assurance || '품질 보증 없음'}
+
 ## 평가 결과
 - 최종 점수: ${evaluationSummary.final_score}점 (100점 만점)
 - 제안서 강점: ${evaluationSummary.proposal_strengths.join(', ')}
