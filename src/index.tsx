@@ -4250,7 +4250,7 @@ app.get('/results', (c) => {
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
 
-                        alert('리포트가 성공적으로 생성되었습니다!\n\n새 창에서 인쇄 가능하며, HTML 파일도 다운로드됩니다.');
+                        alert('리포트가 성공적으로 생성되었습니다!\\n\\n새 창에서 인쇄 가능하며, HTML 파일도 다운로드됩니다.');
                     } else {
                         throw new Error(result.error);
                     }
@@ -4315,6 +4315,11 @@ app.get('/results', (c) => {
                 const proposalScore = proposalData?.total_score || 0;
                 const presentationScore = presentationData?.total_score || 0;
                 
+                // Check if we have actual data
+                const hasProposalData = proposalData && proposalScore > 0;
+                const hasPresentationData = presentationData && presentationScore > 0;
+                const hasAnyData = hasProposalData || hasPresentationData;
+                
                 // Calculate weighted scores (70% proposal + 30% presentation)
                 const proposalWeighted = Math.round(proposalScore * 0.7);
                 const presentationWeighted = Math.round(presentationScore * 0.3);
@@ -4322,13 +4327,21 @@ app.get('/results', (c) => {
                 
                 console.log('[통합결과] Calculated scores:', { 
                     proposalScore, presentationScore, 
-                    proposalWeighted, presentationWeighted, finalScore 
+                    proposalWeighted, presentationWeighted, finalScore,
+                    hasProposalData, hasPresentationData, hasAnyData
                 });
                 
                 // Update main score displays with calculation details
-                document.getElementById('proposal-weighted-score').textContent = proposalWeighted + '점';
-                document.getElementById('presentation-weighted-score').textContent = presentationWeighted + '점';
-                document.getElementById('final-total-score').textContent = finalScore + '점';
+                if (hasAnyData) {
+                    document.getElementById('proposal-weighted-score').textContent = proposalWeighted + '점';
+                    document.getElementById('presentation-weighted-score').textContent = presentationWeighted + '점';
+                    document.getElementById('final-total-score').textContent = finalScore + '점';
+                } else {
+                    // Show helpful message when no data is available
+                    document.getElementById('proposal-weighted-score').textContent = '데이터 없음';
+                    document.getElementById('presentation-weighted-score').textContent = '데이터 없음';
+                    document.getElementById('final-total-score').textContent = '평가 필요';
+                }
                 
                 // Add calculation details tooltip or subtitle if elements exist
                 const proposalElement = document.getElementById('proposal-weighted-score');
@@ -4340,8 +4353,13 @@ app.get('/results', (c) => {
                 if (presentationElement && presentationScore > 0) {
                     presentationElement.title = '원점수 ' + presentationScore + '점 × 30% = ' + presentationWeighted + '점';
                 }
-                document.getElementById('proposal-average-score').textContent = proposalScore + '점';
-                document.getElementById('presentation-average-score').textContent = presentationScore + '점';
+                if (hasAnyData) {
+                    document.getElementById('proposal-average-score').textContent = proposalScore + '점';
+                    document.getElementById('presentation-average-score').textContent = presentationScore + '점';
+                } else {
+                    document.getElementById('proposal-average-score').textContent = '평가 전';
+                    document.getElementById('presentation-average-score').textContent = '평가 전';
+                }
                 
                 // Add tooltips showing weighted calculation
                 const proposalAvgElement = document.getElementById('proposal-average-score');
@@ -4455,7 +4473,7 @@ app.get('/results', (c) => {
                 ] : [0, 0, 0, 0, 0, 0];
                 
                 // Update existing chart or create new one
-                if (window.radarChart) {
+                if (window.radarChart && window.radarChart.data && window.radarChart.data.datasets) {
                     window.radarChart.data.datasets[0].data = proposalData;
                     window.radarChart.data.datasets[1].data = presentationData;
                     window.radarChart.update();
@@ -4559,6 +4577,28 @@ app.get('/results', (c) => {
             
             function updateDynamicFeedback(proposalData, presentationData, finalScore) {
                 console.log('[통합결과] Updating dynamic feedback with actual evaluation data');
+                
+                // Check if we have any actual data
+                const hasData = (proposalData && Object.keys(proposalData).length > 0) || 
+                               (presentationData && Object.keys(presentationData).length > 0);
+                
+                if (!hasData) {
+                    // Show message when no evaluation data is available
+                    const strengthsElement = document.getElementById('dynamic-strengths');
+                    const improvementsElement = document.getElementById('dynamic-improvements');
+                    const summaryElement = document.getElementById('dynamic-summary');
+                    
+                    if (strengthsElement) {
+                        strengthsElement.innerHTML = '<li style="color: var(--pwc-gray-500); font-style: italic;">아직 평가가 완료되지 않았습니다. 제안서 및 발표 평가를 먼저 진행해주세요.</li>';
+                    }
+                    if (improvementsElement) {
+                        improvementsElement.innerHTML = '<li style="color: var(--pwc-gray-500); font-style: italic;">평가 완료 후 개선 사항을 확인할 수 있습니다.</li>';
+                    }
+                    if (summaryElement) {
+                        summaryElement.innerHTML = '<p style="color: var(--pwc-gray-500); font-style: italic;">전체 평가가 완료되면 종합적인 피드백을 제공합니다.</p>';
+                    }
+                    return;
+                }
                 
                 // 실제 AI 평가 피드백 추출
                 let actualStrengths = [];
