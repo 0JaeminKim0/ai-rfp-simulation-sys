@@ -558,17 +558,20 @@ app.post('/api/customers/rfp-analysis', async (c) => {
     let usedLLM = false
     const isUnbound = isWorkersUnbound()
     
-    console.log(`🚀 RFP 분석 모드: ${env.OPENAI_API_KEY ? 'LLM 시도' : 'API 키 없음 - NLP 폴백만'} (텍스트: ${extractedText.length}자)`)
-    console.log(`🔑 API 키 체크: exists=${!!env.OPENAI_API_KEY}, length=${env.OPENAI_API_KEY ? env.OPENAI_API_KEY.length : 0}`)
-    console.log(`📝 추출된 텍스트 미리보기: "${extractedText.substring(0, 100)}..."`)
-    console.log(`✅ LLM 조건 체크: API키(${!!env.OPENAI_API_KEY}) && 텍스트길이>50(${extractedText.length > 50}) = ${env.OPENAI_API_KEY && extractedText.length > 50}`)
+    // 환경변수 올바르게 접근 (Railway 환경 호환성)
+    const OPENAI_API_KEY = getEnvVar(c, 'OPENAI_API_KEY')
     
-    if (env.OPENAI_API_KEY && extractedText.length > 50) {
+    console.log(`🚀 RFP 분석 모드: ${OPENAI_API_KEY ? 'LLM 시도' : 'API 키 없음 - NLP 폴백만'} (텍스트: ${extractedText.length}자)`)
+    console.log(`🔑 API 키 체크: exists=${!!OPENAI_API_KEY}, length=${OPENAI_API_KEY ? OPENAI_API_KEY.length : 0}`)
+    console.log(`📝 추출된 텍스트 미리보기: "${extractedText.substring(0, 100)}..."`)
+    console.log(`✅ LLM 조건 체크: API키(${!!OPENAI_API_KEY}) && 텍스트길이>50(${extractedText.length > 50}) = ${OPENAI_API_KEY && extractedText.length > 50}`)
+    
+    if (OPENAI_API_KEY && extractedText.length > 50) {
       // 🔥 NEW: 분할 처리 RFP 분석 - 3단계 순차 처리로 30초 이내 보장
       console.log(`🚀 RFP LLM 분석 시작: ${fileName} (25초 제한)`)
       
       try {
-        const chunkedOpenAI = new ChunkedOpenAIService(env.OPENAI_API_KEY, isUnbound)
+        const chunkedOpenAI = new ChunkedOpenAIService(OPENAI_API_KEY, isUnbound)
         rfpAnalysisData = await chunkedOpenAI.generateRfpAnalysisChunked(extractedText, fileName)
         usedLLM = true
         console.log(`🎯 [RFP] LLM 분석 성공: ${fileName} - 실제 GPT-4o 사용됨 (15개 속성)`)
