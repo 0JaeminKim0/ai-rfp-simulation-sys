@@ -4231,10 +4231,10 @@ app.get('/results', (c) => {
                 const presentationAvgElement = document.getElementById('presentation-average-score');
                 
                 if (proposalAvgElement) {
-                    proposalAvgElement.title = `가중치 적용: ${proposalScore}점 × 70% = ${proposalWeighted}점`;
+                    proposalAvgElement.title = '가중치 적용: ' + proposalScore + '점 × 70% = ' + proposalWeighted + '점';
                 }
                 if (presentationAvgElement) {
-                    presentationAvgElement.title = `가중치 적용: ${presentationScore}점 × 30% = ${presentationWeighted}점`;
+                    presentationAvgElement.title = '가중치 적용: ' + presentationScore + '점 × 30% = ' + presentationWeighted + '점';
                 }
                 
                 // Update detailed score breakdowns if data is available
@@ -4451,10 +4451,10 @@ app.get('/results', (c) => {
                 // 제안서 평가에서 피드백 추출
                 if (proposalData) {
                     if (proposalData.key_strengths && Array.isArray(proposalData.key_strengths)) {
-                        actualStrengths.push(...proposalData.key_strengths.map(s => `[제안서] ${s}`));
+                        actualStrengths.push(...proposalData.key_strengths.map(s => '[제안서] ' + s));
                     }
                     if (proposalData.improvement_areas && Array.isArray(proposalData.improvement_areas)) {
-                        actualImprovements.push(...proposalData.improvement_areas.map(s => `[제안서] ${s}`));
+                        actualImprovements.push(...proposalData.improvement_areas.map(s => '[제안서] ' + s));
                     }
                     if (proposalData.overall_feedback) {
                         actualSummary = proposalData.overall_feedback;
@@ -4467,10 +4467,10 @@ app.get('/results', (c) => {
                 // 발표 평가에서 피드백 추출  
                 if (presentationData) {
                     if (presentationData.key_strengths && Array.isArray(presentationData.key_strengths)) {
-                        actualStrengths.push(...presentationData.key_strengths.map(s => `[발표] ${s}`));
+                        actualStrengths.push(...presentationData.key_strengths.map(s => '[발표] ' + s));
                     }
                     if (presentationData.improvement_areas && Array.isArray(presentationData.improvement_areas)) {
-                        actualImprovements.push(...presentationData.improvement_areas.map(s => `[발표] ${s}`));
+                        actualImprovements.push(...presentationData.improvement_areas.map(s => '[발표] ' + s));
                     }
                     if (presentationData.overall_feedback) {
                         if (actualSummary) {
@@ -4585,12 +4585,12 @@ function extractActualStrengths(proposalEval: any, presentationEval: any): strin
   
   // 제안서 평가에서 강점 추출
   if (proposalEval?.key_strengths && Array.isArray(proposalEval.key_strengths)) {
-    strengths.push(...proposalEval.key_strengths.map((s: string) => `[제안서] ${s}`))
+    strengths.push(...proposalEval.key_strengths.map((s: string) => '[제안서] ' + s))
   }
   
   // 발표 평가에서 강점 추출  
   if (presentationEval?.key_strengths && Array.isArray(presentationEval.key_strengths)) {
-    strengths.push(...presentationEval.key_strengths.map((s: string) => `[발표] ${s}`))
+    strengths.push(...presentationEval.key_strengths.map((s: string) => '[발표] ' + s))
   }
   
   // 점수 기반 보완 강점 (AI 피드백이 없는 경우)
@@ -4621,12 +4621,12 @@ function extractActualImprovements(proposalEval: any, presentationEval: any): st
   
   // 제안서 평가에서 개선점 추출
   if (proposalEval?.improvement_areas && Array.isArray(proposalEval.improvement_areas)) {
-    improvements.push(...proposalEval.improvement_areas.map((s: string) => `[제안서] ${s}`))
+    improvements.push(...proposalEval.improvement_areas.map((s: string) => '[제안서] ' + s))
   }
   
   // 발표 평가에서 개선점 추출
   if (presentationEval?.improvement_areas && Array.isArray(presentationEval.improvement_areas)) {
-    improvements.push(...presentationEval.improvement_areas.map((s: string) => `[발표] ${s}`))
+    improvements.push(...presentationEval.improvement_areas.map((s: string) => '[발표] ' + s))
   }
   
   // 점수 기반 보완 개선점 (AI 피드백이 없는 경우)
@@ -4688,7 +4688,7 @@ function generateActualOverallFeedback(proposalEval: any, presentationEval: any,
     }
   }
   
-  return feedback + ` (최종 점수: ${finalScore}점)`
+  return feedback + ' (최종 점수: ' + finalScore + '점)'
 }
 
 // RFP 분석 헬퍼 함수
