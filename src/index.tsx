@@ -1655,7 +1655,39 @@ app.post('/api/generate-comprehensive-feedback', async (c) => {
     }
     
     // LLM 서비스 초기화
-    const openaiService = new OpenAIService()
+    const openaiApiKey = process.env.OPENAI_API_KEY || c.env?.OPENAI_API_KEY
+    
+    if (!openaiApiKey) {
+      console.warn('[종합피드백] OpenAI API 키가 설정되지 않음, 기본 피드백 사용')
+      
+      // API 키 없이 기본 피드백 생성
+      const fallbackFeedback = {
+        strengths: [
+          "전반적으로 기본적인 요구사항을 충족하는 수준입니다.",
+          "제안서의 구조적 완성도가 양호합니다.", 
+          "필수 요소들이 포함되어 있습니다."
+        ],
+        improvements: [
+          "세부적인 완성도 향상을 권장합니다.",
+          "고객 맞춤형 요소를 강화할 필요가 있습니다."
+        ],
+        summary: "종합적으로 기본 요건을 만족하는 제안입니다. OpenAI API 연동 후 더 정확한 분석이 제공될 예정입니다.",
+        expected_questions: [
+          "프로젝트 일정 관리는 어떻게 하실 계획인가요?",
+          "예산 범위 내에서 품질을 어떻게 보장하시나요?",
+          "유사 프로젝트 경험이 있으신가요?",
+          "사후 지원 체계는 어떻게 구성되나요?"
+        ]
+      }
+      
+      return c.json({
+        success: true,
+        message: 'API 키 미설정으로 기본 피드백 제공',
+        data: fallbackFeedback
+      })
+    }
+    
+    const openaiService = new OpenAIService(openaiApiKey)
     
     // 고객 페르소나 정보 구성
     const personaInfo = {

@@ -12,6 +12,7 @@ import type {
 export class OpenAIService {
   private openai: OpenAI
   private readonly isUnbound: boolean
+  private readonly isProduction: boolean
   private readonly apiKeyHash: string
   
   constructor(apiKey: string) {
@@ -26,6 +27,11 @@ export class OpenAIService {
     // Workers Unbound 환경 감지 (보안 강화)
     this.isUnbound = typeof globalThis !== 'undefined' && 
                     (globalThis as any).WORKERS_UNBOUND === 'true'
+    
+    // Production 환경 감지
+    this.isProduction = process.env.NODE_ENV === 'production' || 
+                       typeof globalThis !== 'undefined' &&
+                       (globalThis as any).NODE_ENV === 'production'
     
     this.openai = new OpenAI({
       apiKey: apiKey,
@@ -624,6 +630,40 @@ ${customer.customer_type} 관점에서 고객사의 우선순위와 우려사항
         } as EvaluationScores
       }
       throw new Error(`AI 평가 실패: ${error.message}`)
+    }
+  }
+
+  /**
+   * 일반적인 텍스트 완성 생성
+   */
+  async generateCompletion(
+    prompt: string, 
+    options?: {
+      max_tokens?: number
+      temperature?: number
+      model?: string
+    }
+  ): Promise<string> {
+    const { max_tokens = 1500, temperature = 0.7, model = 'gpt-4o' } = options || {}
+    
+    try {
+      return await this.safeAPICall(async () => {
+        const response = await this.openai.chat.completions.create({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          temperature,
+          max_tokens: this.isUnbound ? max_tokens * 1.5 : max_tokens,
+        })
+
+        const content = response.choices[0].message.content
+        if (!content) throw new Error('OpenAI 응답이 비어있습니다')
+        
+        return content
+      }, '기본 응답 - API 타임아웃으로 인한 기본값입니다.', 8000)
+      
+    } catch (error) {
+      this.secureLog('텍스트 완성 생성 오류', error)
+      throw new Error(`텍스트 완성 실패: ${error.message}`)
     }
   }
 
