@@ -42,12 +42,20 @@ const app = new Hono<{ Bindings: Bindings }>()
 // CORS 설정
 app.use('/api/*', cors())
 
-// 정적 파일 서빙 (Cloudflare Workers 환경에서만)
-// Railway에서는 server.js에서 Node.js 방식으로 처리
+// 정적 파일 서빙 설정 함수
+async function setupStaticFiles() {
+  // Cloudflare Workers 환경에서만 정적 파일 서빙
+  // Railway에서는 server.js에서 Node.js 방식으로 처리
+  if (typeof globalThis.process === 'undefined') {
+    // Cloudflare Workers 환경
+    const { serveStatic } = await import('hono/cloudflare-workers')
+    app.use('/static/*', serveStatic({ root: './public' }))
+  }
+}
+
+// 정적 파일 설정 초기화 (Cloudflare 환경에서만)
 if (typeof globalThis.process === 'undefined') {
-  // Cloudflare Workers 환경
-  const { serveStatic } = await import('hono/cloudflare-workers')
-  app.use('/static/*', serveStatic({ root: './public' }))
+  setupStaticFiles().catch(console.error)
 }
 
 // === 헬퍼 함수들 ===

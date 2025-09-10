@@ -5,7 +5,7 @@ const isRailwayBuild = process.env.RAILWAY || process.env.RAILWAY_ENVIRONMENT
 export default defineConfig({
   build: {
     outDir: 'dist',
-    target: 'es2020',
+    target: 'es2022', // top-level await 지원을 위해 es2022로 변경
     rollupOptions: {
       input: 'src/index.tsx',
       output: {
@@ -17,7 +17,7 @@ export default defineConfig({
     sourcemap: false
   },
   esbuild: {
-    target: 'es2020',
+    target: 'es2022', // top-level await 지원을 위해 es2022로 변경
     charset: 'utf8'
   }
 })
