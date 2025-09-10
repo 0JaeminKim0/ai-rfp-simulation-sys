@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Enhanced Fallback</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        button { background: #007cba; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Enhanced File Parsing Fallback Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Case: Korean Filename with Project Keywords</h2>
+            <p>This will test the enhanced fallback mechanism for files that fail to parse properly.</p>
+            
+            <form id="testForm" enctype="multipart/form-data">
+                <div>
+                    <label>Upload a file to test fallback:</label><br>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.txt" required>
+                </div>
+                <br>
+                <button type="submit">🔍 Test Enhanced Fallback</button>
+            </form>
+            
+            <div id="result" class="result" style="display:none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Expected Improvements</h2>
+            <ul>
+                <li>✅ Korean filename detection and analysis</li>
+                <li>✅ Project keyword identification (한수원, 프로젝트, 원가관리, etc.)</li>
+                <li>✅ Enhanced structured fallback content</li>
+                <li>✅ Meaningful AI evaluation input even with parsing failures</li>
+                <li>✅ Better error handling and logging</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('rfp_file', fileInput.files[0]);
+            formData.append('file_name', fileInput.files[0].name);
+            formData.append('parsing_mode', 'detailed');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p>🔄 Testing enhanced fallback mechanism...</p>';
+            
+            try {
+                const response = await fetch('/api/customers/rfp-analysis', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3>✅ Test Results</h3>
+                        <p><strong>Proposal Title:</strong> ${data.proposal_title}</p>
+                        <p><strong>Content Length:</strong> ${data.proposal_content_length} characters</p>
+                        <p><strong>Content Preview:</strong></p>
+                        <pre style="white-space: pre-wrap; background: #fff; padding: 10px; border: 1px solid #ddd; max-height: 300px; overflow-y: auto;">${data.proposal_content_preview}</pre>
+                        
+                        ${data.proposal_content_length > 50 ? 
+                            '<p style="color: green;">✅ Enhanced fallback mechanism working properly!</p>' : 
+                            '<p style="color: orange;">⚠️ Content still short, may need further fallback improvements</p>'
+                        }
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ Network Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
