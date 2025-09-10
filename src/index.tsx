@@ -3566,6 +3566,11 @@ app.get('/favicon.ico', (c) => {
 
 // 통합 결과 페이지
 app.get('/results', (c) => {
+  const urlParams = new URL(c.req.url).searchParams
+  const proposalEvaluationId = urlParams.get('proposal_evaluation_id') || ''
+  const presentationEvaluationId = urlParams.get('presentation_evaluation_id') || ''
+  const customerId = urlParams.get('customer_id') || ''
+  
   return c.html(`
     <!DOCTYPE html>
     <html lang="ko">
@@ -3615,17 +3620,17 @@ app.get('/results', (c) => {
                     <div class="pwc-grid pwc-grid-3" style="gap: var(--spacing-lg);">
                         <div class="pwc-score-card" style="background: linear-gradient(135deg, var(--pwc-blue), var(--pwc-light-blue)); color: var(--pwc-white); border-radius: var(--radius-lg); padding: var(--spacing-lg); position: relative; overflow: hidden;">
                             <div style="position: absolute; top: -10px; right: -10px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
-                            <div style="font-size: 2.25rem; font-weight: 700; margin-bottom: var(--spacing-sm);">40점</div>
+                            <div style="font-size: 2.25rem; font-weight: 700; margin-bottom: var(--spacing-sm);" id="proposal-weighted-score">-</div>
                             <div style="font-size: 0.9rem; font-weight: 500; opacity: 0.9;">제안서 평가 (70%)</div>
                         </div>
                         <div class="pwc-score-card" style="background: linear-gradient(135deg, var(--pwc-purple), var(--pwc-purple-light)); color: var(--pwc-white); border-radius: var(--radius-lg); padding: var(--spacing-lg); position: relative; overflow: hidden;">
                             <div style="position: absolute; top: -10px; right: -10px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
-                            <div style="font-size: 2.25rem; font-weight: 700; margin-bottom: var(--spacing-sm);">40점</div>
+                            <div style="font-size: 2.25rem; font-weight: 700; margin-bottom: var(--spacing-sm);" id="presentation-weighted-score">-</div>
                             <div style="font-size: 0.9rem; font-weight: 500; opacity: 0.9;">발표 평가 (30%)</div>
                         </div>
                         <div class="pwc-score-card" style="background: linear-gradient(135deg, var(--pwc-orange), var(--pwc-orange-light)); color: var(--pwc-white); border-radius: var(--radius-lg); padding: var(--spacing-lg); position: relative; overflow: hidden; border: 3px solid var(--pwc-navy);">
                             <div style="position: absolute; top: -10px; right: -10px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%;"></div>
-                            <div style="font-size: 2.75rem; font-weight: 700; margin-bottom: var(--spacing-sm); text-shadow: 0 2px 4px rgba(0,0,0,0.2);">40점</div>
+                            <div style="font-size: 2.75rem; font-weight: 700; margin-bottom: var(--spacing-sm); text-shadow: 0 2px 4px rgba(0,0,0,0.2);" id="final-total-score">-</div>
                             <div style="font-size: 0.9rem; font-weight: 600; opacity: 0.95;">최종 통합 점수 (100점 만점)</div>
                             <div style="position: absolute; bottom: 5px; right: 10px;">
                                 <i class="fas fa-star" style="color: var(--pwc-white); font-size: 1.2rem; opacity: 0.7;"></i>
@@ -3673,62 +3678,62 @@ app.get('/results', (c) => {
                                             <tr style="border-bottom: 1px solid var(--neutral-200);">
                                                 <td style="padding: var(--spacing-md); font-weight: 600; color: var(--pwc-navy); word-break: keep-all;">명확성</td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--pwc-blue-light); color: var(--pwc-blue);">40점</span>
+                                                    <span class="pwc-badge" style="background: var(--pwc-blue-light); color: var(--pwc-blue);" id="proposal-clarity-score">-</span>
                                                 </td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--info-color-light); color: var(--info-color);">40점</span>
+                                                    <span class="pwc-badge" style="background: var(--info-color-light); color: var(--info-color);" id="presentation-clarity-score">-</span>
                                                 </td>
-                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">0.0</td>
+                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);" id="clarity-diff">-</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid var(--neutral-200);">
                                                 <td style="padding: var(--spacing-md); font-weight: 600; color: var(--pwc-navy); word-break: keep-all;">전문성</td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);">50점 <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
+                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);" id="proposal-expertise-score">- <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
                                                 </td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);">50점 <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
+                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);" id="presentation-expertise-score">- <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
                                                 </td>
-                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">0.0</td>
+                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);" id="expertise-diff">-</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid var(--neutral-200);">
                                                 <td style="padding: var(--spacing-md); font-weight: 600; color: var(--pwc-navy); word-break: keep-all;">설득력</td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--pwc-blue-light); color: var(--pwc-blue);">40점</span>
+                                                    <span class="pwc-badge" style="background: var(--pwc-blue-light); color: var(--pwc-blue);" id="proposal-persuasiveness-score">-</span>
                                                 </td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--info-color-light); color: var(--info-color);">40점</span>
+                                                    <span class="pwc-badge" style="background: var(--info-color-light); color: var(--info-color);" id="presentation-persuasiveness-score">-</span>
                                                 </td>
-                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">0.0</td>
+                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);" id="persuasiveness-diff">-</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid var(--neutral-200);">
                                                 <td style="padding: var(--spacing-md); font-weight: 600; color: var(--pwc-navy); word-break: keep-all;">논리성</td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--pwc-blue-light); color: var(--pwc-blue);">40점</span>
+                                                    <span class="pwc-badge" style="background: var(--pwc-blue-light); color: var(--pwc-blue);" id="proposal-logic-score">-</span>
                                                 </td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--info-color-light); color: var(--info-color);">40점</span>
+                                                    <span class="pwc-badge" style="background: var(--info-color-light); color: var(--info-color);" id="presentation-logic-score">-</span>
                                                 </td>
-                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">0.0</td>
+                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);" id="logic-diff">-</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid var(--neutral-200);">
                                                 <td style="padding: var(--spacing-md); font-weight: 600; color: var(--pwc-navy); word-break: keep-all;">창의성</td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--warning-color-light); color: var(--warning-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);">30점 <i class="fas fa-exclamation-triangle"></i></span>
+                                                    <span class="pwc-badge" style="background: var(--warning-color-light); color: var(--warning-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);" id="proposal-creativity-score">- <i class="fas fa-exclamation-triangle"></i></span>
                                                 </td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--warning-color-light); color: var(--warning-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);">30점 <i class="fas fa-exclamation-triangle"></i></span>
+                                                    <span class="pwc-badge" style="background: var(--warning-color-light); color: var(--warning-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);" id="presentation-creativity-score">- <i class="fas fa-exclamation-triangle"></i></span>
                                                 </td>
-                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">0.0</td>
+                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);" id="creativity-diff">-</td>
                                             </tr>
                                             <tr style="border-bottom: 1px solid var(--neutral-200);">
                                                 <td style="padding: var(--spacing-md); font-weight: 600; color: var(--pwc-navy); word-break: keep-all;">신뢰성</td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);">50점 <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
+                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);" id="proposal-reliability-score">- <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
                                                 </td>
                                                 <td style="padding: var(--spacing-md); text-align: center;">
-                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);">50점 <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
+                                                    <span class="pwc-badge" style="background: var(--success-color-light); color: var(--success-color); display: inline-flex; align-items: center; gap: var(--spacing-xs);" id="presentation-reliability-score">- <i class="fas fa-star" style="color: var(--pwc-orange);"></i></span>
                                                 </td>
-                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">0.0</td>
+                                                <td style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);" id="reliability-diff">-</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -3739,13 +3744,13 @@ app.get('/results', (c) => {
                                     <div style="background: linear-gradient(135deg, var(--pwc-blue), var(--pwc-light-blue)); color: var(--pwc-white); border-radius: var(--radius-md); padding: var(--spacing-md); text-align: center; position: relative; overflow: hidden;">
                                         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
                                         <div style="font-weight: 600; margin-bottom: var(--spacing-xs); opacity: 0.9;">제안서 평균</div>
-                                        <div style="font-size: 1.5rem; font-weight: 700;">82점</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;" id="proposal-average-score">-</div>
                                         <i class="fas fa-file-alt" style="position: absolute; bottom: 8px; right: 10px; opacity: 0.6; font-size: 1.2rem;"></i>
                                     </div>
                                     <div style="background: linear-gradient(135deg, var(--pwc-purple), var(--pwc-purple-light)); color: var(--pwc-white); border-radius: var(--radius-md); padding: var(--spacing-md); text-align: center; position: relative; overflow: hidden;">
                                         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
                                         <div style="font-weight: 600; margin-bottom: var(--spacing-xs); opacity: 0.9;">발표 평균</div>
-                                        <div style="font-size: 1.5rem; font-weight: 700;">82점</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;" id="presentation-average-score">-</div>
                                         <i class="fas fa-presentation" style="position: absolute; bottom: 8px; right: 10px; opacity: 0.6; font-size: 1.2rem;"></i>
                                     </div>
                                 </div>
@@ -3936,122 +3941,13 @@ app.get('/results', (c) => {
             // 차트 애니메이션 및 인터랙션 개선
             const ctx = document.getElementById('radarChart').getContext('2d');
             
-            // 제안서와 발표 데이터 (100점 만점)
-            const proposalScores = [40, 50, 40, 40, 30, 50];
-            const presentationScores = [40, 50, 40, 40, 30, 50];
-            const labels = ['명확성', '전문성', '설득력', '논리성', '창의성', '신뢰성'];
-            
-            // 차트 생성 with 향상된 옵션
-            const radarChart = new Chart(ctx, {
+            // Chart will be initialized by loadIntegratedResultsData() function
+            // Initial empty chart creation is handled dynamically with actual data
                 type: 'radar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '제안서 평가 (70%)',
-                        data: proposalScores,
-                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }, {
-                        label: '발표 평가 (30%)',
-                        data: presentationScores,
-                        backgroundColor: 'rgba(147, 51, 234, 0.15)',
-                        borderColor: 'rgba(147, 51, 234, 1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: 'rgba(147, 51, 234, 1)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeInOutQuart'
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'point'
-                    },
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 50,
-                            ticks: {
-                                stepSize: 10,
-                                font: {
-                                    size: 12
-                                },
-                                color: '#6B7280',
-                                backdropColor: 'transparent'
-                            },
-                            grid: {
-                                color: '#E5E7EB'
-                            },
-                            angleLines: {
-                                color: '#E5E7EB'
-                            },
-                            pointLabels: {
-                                font: {
-                                    size: 14,
-                                    weight: '500'
-                                },
-                                color: '#374151'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                font: {
-                                    size: 14,
-                                    weight: '500'
-                                },
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleFont: {
-                                size: 14,
-                                weight: '600'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            padding: 12,
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.r + '점 (50점 만점)';
-                                },
-                                afterLabel: function(context) {
-                                    const score = context.parsed.r;
-                                    let evaluation;
-                                    if (score >= 45) evaluation = '매우 우수';
-                                    else if (score >= 35) evaluation = '우수';
-                                    else if (score >= 25) evaluation = '보통';
-                                    else if (score >= 15) evaluation = '부족';
-                                    else evaluation = '매우 부족';
-                                    return '평가: ' + evaluation;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+
 
             async function downloadReport() {
                 try {
@@ -4100,6 +3996,293 @@ app.get('/results', (c) => {
                     button.disabled = false;
                 }
             }
+            
+            // Load integrated results data
+            async function loadIntegratedResultsData() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const proposalEvaluationId = urlParams.get('proposal_evaluation_id');
+                const presentationEvaluationId = urlParams.get('presentation_evaluation_id');
+                const customerId = urlParams.get('customer_id');
+                
+                console.log('[통합결과] Loading data with:', { proposalEvaluationId, presentationEvaluationId, customerId });
+                
+                try {
+                    let proposalData = null;
+                    let presentationData = null;
+                    
+                    // Load proposal evaluation data
+                    if (proposalEvaluationId) {
+                        console.log('[통합결과] Loading proposal evaluation...');
+                        const proposalResponse = await fetch(`/api/evaluations/proposal/${proposalEvaluationId}`);
+                        if (proposalResponse.ok) {
+                            const result = await proposalResponse.json();
+                            proposalData = result.data;
+                            console.log('[통합결과] Proposal data loaded:', proposalData);
+                        }
+                    }
+                    
+                    // Load presentation evaluation data
+                    if (presentationEvaluationId) {
+                        console.log('[통합결과] Loading presentation evaluation...');
+                        const presentationResponse = await fetch(`/api/evaluations/presentation/${presentationEvaluationId}`);
+                        if (presentationResponse.ok) {
+                            const result = await presentationResponse.json();
+                            presentationData = result.data;
+                            console.log('[통합결과] Presentation data loaded:', presentationData);
+                        }
+                    }
+                    
+                    // Update UI with loaded data
+                    updateIntegratedResultsUI(proposalData, presentationData);
+                    
+                } catch (error) {
+                    console.error('[통합결과] Error loading evaluation data:', error);
+                    showErrorMessage('평가 데이터 로드 중 오류가 발생했습니다.');
+                }
+            }
+            
+            function updateIntegratedResultsUI(proposalData, presentationData) {
+                console.log('[통합결과] Updating UI with data:', { proposalData, presentationData });
+                
+                // Calculate scores (100-point system)
+                const proposalScore = proposalData?.total_score || 0;
+                const presentationScore = presentationData?.total_score || 0;
+                
+                // Calculate weighted scores (70% proposal + 30% presentation)
+                const proposalWeighted = Math.round(proposalScore * 0.7);
+                const presentationWeighted = Math.round(presentationScore * 0.3);
+                const finalScore = proposalWeighted + presentationWeighted;
+                
+                console.log('[통합결과] Calculated scores:', { 
+                    proposalScore, presentationScore, 
+                    proposalWeighted, presentationWeighted, finalScore 
+                });
+                
+                // Update main score displays
+                document.getElementById('proposal-weighted-score').textContent = proposalWeighted + '점';
+                document.getElementById('presentation-weighted-score').textContent = presentationWeighted + '점';
+                document.getElementById('final-total-score').textContent = finalScore + '점';
+                document.getElementById('proposal-average-score').textContent = proposalScore + '점';
+                document.getElementById('presentation-average-score').textContent = presentationScore + '점';
+                
+                // Update detailed score breakdowns if data is available
+                if (proposalData && proposalData.scores) {
+                    updateDetailedScores('proposal', proposalData.scores);
+                }
+                
+                if (presentationData && presentationData.scores) {
+                    updateDetailedScores('presentation', presentationData.scores);
+                }
+                
+                // Update radar chart with actual data
+                updateRadarChart(proposalData?.scores, presentationData?.scores);
+            }
+            
+            function updateDetailedScores(type, scores) {
+                const scoreMap = {
+                    clarity: 'clarity',
+                    expertise: 'expertise', 
+                    persuasiveness: 'persuasiveness',
+                    logic: 'logic',
+                    creativity: 'creativity',
+                    reliability: 'reliability'
+                };
+                
+                Object.entries(scoreMap).forEach(([key, field]) => {
+                    const element = document.getElementById(`${type}-${field}-score`);
+                    if (element && scores[key]) {
+                        const score = scores[key].score || 0;
+                        element.textContent = score + '점';
+                        
+                        // Update styling based on score
+                        updateScoreStyling(element, score);
+                    }
+                });
+                
+                // Calculate and display differences
+                updateScoreDifferences(scores);
+            }
+            
+            function updateScoreStyling(element, score) {
+                // Remove existing classes
+                element.className = element.className.replace(/background: [^;]+;/, '');
+                
+                // Apply styling based on score range
+                if (score >= 80) {
+                    element.style.background = 'var(--success-color-light)';
+                    element.style.color = 'var(--success-color)';
+                    element.innerHTML = score + '점 <i class="fas fa-star" style="color: var(--pwc-orange);"></i>';
+                } else if (score >= 60) {
+                    element.style.background = 'var(--pwc-blue-light)';
+                    element.style.color = 'var(--pwc-blue)';
+                    element.textContent = score + '점';
+                } else {
+                    element.style.background = 'var(--warning-color-light)';
+                    element.style.color = 'var(--warning-color)';
+                    element.innerHTML = score + '점 <i class="fas fa-exclamation-triangle"></i>';
+                }
+            }
+            
+            function updateScoreDifferences(proposalScores, presentationScores) {
+                if (!proposalScores || !presentationScores) return;
+                
+                const scoreTypes = ['clarity', 'expertise', 'persuasiveness', 'logic', 'creativity', 'reliability'];
+                
+                scoreTypes.forEach(type => {
+                    const proposalScore = proposalScores[type]?.score || 0;
+                    const presentationScore = presentationScores[type]?.score || 0;
+                    const diff = Math.abs(proposalScore - presentationScore);
+                    
+                    const diffElement = document.getElementById(`${type}-diff`);
+                    if (diffElement) {
+                        diffElement.textContent = diff.toFixed(1);
+                    }
+                });
+            }
+            
+            function updateRadarChart(proposalScores, presentationScores) {
+                const ctx = document.getElementById('radarChart');
+                if (!ctx) return;
+                
+                const proposalData = proposalScores ? [
+                    proposalScores.clarity?.score || 0,
+                    proposalScores.expertise?.score || 0,
+                    proposalScores.persuasiveness?.score || 0,
+                    proposalScores.logic?.score || 0,
+                    proposalScores.creativity?.score || 0,
+                    proposalScores.reliability?.score || 0
+                ] : [0, 0, 0, 0, 0, 0];
+                
+                const presentationData = presentationScores ? [
+                    presentationScores.clarity?.score || 0,
+                    presentationScores.expertise?.score || 0,
+                    presentationScores.persuasiveness?.score || 0,
+                    presentationScores.logic?.score || 0,
+                    presentationScores.creativity?.score || 0,
+                    presentationScores.reliability?.score || 0
+                ] : [0, 0, 0, 0, 0, 0];
+                
+                // Update existing chart or create new one
+                if (window.radarChart) {
+                    window.radarChart.data.datasets[0].data = proposalData;
+                    window.radarChart.data.datasets[1].data = presentationData;
+                    window.radarChart.update();
+                } else {
+                    // Create new radar chart with 100-point scale
+                    window.radarChart = new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['명확성', '전문성', '설득력', '논리성', '창의성', '신뢰성'],
+                            datasets: [{
+                                label: '제안서 평가',
+                                data: proposalData,
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderColor: '#3B82F6',
+                                pointBackgroundColor: '#3B82F6',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                borderWidth: 2
+                            }, {
+                                label: '발표 평가',
+                                data: presentationData,
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                borderColor: '#A855F7',
+                                pointBackgroundColor: '#A855F7',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    max: 100, // Change from 50 to 100 for 100-point scale
+                                    ticks: {
+                                        stepSize: 20, // Change from 10 to 20 for better spacing
+                                        backdropColor: 'transparent'
+                                    },
+                                    grid: {
+                                        color: '#E5E7EB'
+                                    },
+                                    angleLines: {
+                                        color: '#E5E7EB'
+                                    },
+                                    pointLabels: {
+                                        font: {
+                                            size: 14,
+                                            weight: '500'
+                                        },
+                                        color: '#374151'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 20,
+                                        font: {
+                                            size: 14,
+                                            weight: '500'
+                                        },
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleFont: {
+                                        size: 14,
+                                        weight: '600'
+                                    },
+                                    bodyFont: {
+                                        size: 13
+                                    },
+                                    padding: 12,
+                                    cornerRadius: 8,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.dataset.label + ': ' + context.parsed.r + '점 (100점 만점)';
+                                        },
+                                        afterLabel: function(context) {
+                                            const score = context.parsed.r;
+                                            let evaluation;
+                                            if (score >= 90) evaluation = '매우 우수';
+                                            else if (score >= 80) evaluation = '우수';
+                                            else if (score >= 70) evaluation = '양호';
+                                            else if (score >= 60) evaluation = '보통';
+                                            else evaluation = '개선 필요';
+                                            return '평가: ' + evaluation;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            function showErrorMessage(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed; top: 20px; right: 20px; z-index: 1000;
+                    background: var(--error-color); color: white; padding: 1rem;
+                    border-radius: 8px; box-shadow: var(--shadow-lg);
+                `;
+                errorDiv.textContent = message;
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+            
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('[통합결과] Page loaded, initializing...');
+                loadIntegratedResultsData();
+            });
         </script>
     </body>
     </html>
