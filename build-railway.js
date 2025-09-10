@@ -63,15 +63,19 @@ async function convertTsxToJs() {
       // 함수 반환 타입 제거
       .replace(/\):\s*[A-Za-z0-9<>\[\]|&\s,{}._]*(?=\s*[{=])/g, ')')
       
-    // 2단계: TypeScript 구문 제거  
+    // 2단계: TypeScript 구문 제거 (순서 중요!)
     content = content
       .replace(/interface\s+\w+\s*{[\s\S]*?}/g, '') // 인터페이스 제거
-      .replace(/type\s+\w+\s*=[\s\S]*?(?=\n\n|\n(?=\w)|\n$)/g, '') // 타입 정의 제거
       .replace(/import\s+type\s+{[\s\S]*?}\s+from[^;]+;/g, '') // type import 제거
-      .replace(/type\s+Bindings\s*=[\s\S]*?}/g, '') // Bindings 타입 제거
-      .replace(/as\s+\w+/g, '') // as 타입캐스팅 제거
-      .replace(/<[^>]+>/g, '') // 제네릭 타입 제거
       .replace(/\/\/\s*타입\s*임포트[\s\S]*?(?=\/\/|\n\n|\nimport|\nconst)/g, '') // 타입 임포트 섹션 제거
+      // Bindings 타입 완전 제거
+      .replace(/type\s+Bindings\s*=\s*{[\s\S]*?}\s*\n/g, '') // Bindings 타입 제거
+      .replace(/\s+DB;\s+KV;\s+OPENAI_API_KEY;\s*}/g, '') // 남은 Bindings 속성 제거
+      .replace(/new\s+Hono<[^>]*>/g, 'new Hono') // Hono 제네릭 타입 제거
+      .replace(/new\s+Map<[^>]*>/g, 'new Map') // Map 제네릭 타입 제거
+      .replace(/as\s+\w+/g, '') // as 타입캐스팅 제거
+      // 다른 type 정의 제거 (app 정의 이후)
+      .replace(/(const\s+app\s*=[\s\S]*?\n)([\s\S]*?)(\ntype\s+\w+\s*=[\s\S]*?(?=\n\w|\n$))/g, '$1$2') // app 정의 이후 type 제거
       
     // 3단계: import 경로 수정 및 정리
     content = content
