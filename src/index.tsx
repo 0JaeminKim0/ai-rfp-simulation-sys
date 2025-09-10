@@ -2545,6 +2545,77 @@ app.get('/api/report/demo', async (c) => {
   }
 })
 
+// 실제 평가 데이터로 리포트 생성
+app.post('/api/report/generate', async (c) => {
+  try {
+    const { customer_id, proposal_evaluation_id, presentation_evaluation_id } = await c.req.json()
+    const { env } = c
+    
+    if (!customer_id) {
+      return c.json({
+        success: false,
+        error: '고객 ID가 필요합니다.'
+      }, 400)
+    }
+    
+    const storage = new JsonStorageService(env.KV)
+    const pdfGenerator = new PDFGeneratorService()
+    
+    // 고객 데이터 로드
+    const customer = await storage.getAIVirtualCustomer(customer_id)
+    if (!customer) {
+      return c.json({
+        success: false,
+        error: '해당 고객 정보를 찾을 수 없습니다.'
+      }, 404)
+    }
+    
+    // 평가 데이터 로드
+    let proposalEval = null
+    let presentationEval = null
+    
+    if (proposal_evaluation_id) {
+      proposalEval = await storage.getProposalEvaluation(proposal_evaluation_id)
+      console.log('리포트용 제안서 평가 로드:', proposalEval?.total_score)
+    }
+    
+    if (presentation_evaluation_id) {
+      presentationEval = await storage.getPresentationEvaluation(presentation_evaluation_id)
+      console.log('리포트용 발표 평가 로드:', presentationEval?.total_score)
+    }
+    
+    if (!proposalEval && !presentationEval) {
+      return c.json({
+        success: false,
+        error: '제안서 평가 또는 발표 평가 중 하나 이상이 필요합니다.'
+      }, 400)
+    }
+    
+    // 리포트 생성
+    const reportData = pdfGenerator.generateReportData(customer, proposalEval, presentationEval)
+    const htmlReport = pdfGenerator.generateHTMLReport(reportData)
+    
+    console.log('실제 리포트 최종 점수:', reportData.finalScores.total)
+
+    return c.json({
+      success: true,
+      data: {
+        report_data: reportData,
+        html_content: htmlReport,
+        download_filename: `RFP평가리포트_${customer.name}_${new Date().toISOString().split('T')[0]}.html`
+      },
+      message: '리포트가 성공적으로 생성되었습니다.'
+    })
+
+  } catch (error) {
+    console.error('실제 리포트 생성 오류:', error)
+    return c.json({
+      success: false,
+      error: '리포트 생성 중 오류가 발생했습니다: ' + error.message
+    }, 500)
+  }
+})
+
 // === 웹 페이지 라우트 ===
 
 // 메인 대시보드
@@ -3976,9 +4047,35 @@ app.get('/results', (c) => {
                     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>리포트 생성 중...';
                     button.disabled = true;
 
-                    // 데모 리포트 생성 API 호출
-                    const response = await fetch('/api/report/demo');
-                    const result = await response.json();
+                    // URL에서 평가 ID들 가져오기
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const proposalEvaluationId = urlParams.get('proposal_evaluation_id');
+                    const presentationEvaluationId = urlParams.get('presentation_evaluation_id');
+                    const customerId = urlParams.get('customer_id');
+
+                    let response, result;
+
+                    // 실제 평가 데이터가 있으면 실제 리포트 생성, 없으면 데모 리포트
+                    if (customerId && (proposalEvaluationId || presentationEvaluationId)) {
+                        console.log('[리포트] 실제 평가 데이터로 리포트 생성:', { customerId, proposalEvaluationId, presentationEvaluationId });
+                        
+                        response = await fetch('/api/report/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                customer_id: customerId,
+                                proposal_evaluation_id: proposalEvaluationId,
+                                presentation_evaluation_id: presentationEvaluationId
+                            })
+                        });
+                        result = await response.json();
+                    } else {
+                        console.log('[리포트] 데모 데이터로 리포트 생성');
+                        response = await fetch('/api/report/demo');
+                        result = await response.json();
+                    }
 
                     if (result.success) {
                         // HTML 리포트를 새 창에서 열기 (인쇄용)

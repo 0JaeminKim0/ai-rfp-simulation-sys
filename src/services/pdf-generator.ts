@@ -48,31 +48,42 @@ export class PDFGeneratorService {
     
     // 점수 변환 함수: 실제 평가 시스템과 동일한 로직
     const getScoreValue = (scoreObj: any): number => {
-      // 100점 만점 점수가 있으면 사용, 없으면 1-5점을 100점으로 변환
-      if (scoreObj.score_100) {
+      // 100점 만점 점수 직접 사용 (현재 시스템의 score 속성)
+      if (scoreObj && typeof scoreObj.score === 'number') {
+        // 100점 만점 점수 그대로 사용
+        if (scoreObj.score >= 0 && scoreObj.score <= 100) {
+          return scoreObj.score
+        }
+        // 1-5점 범위인 경우 100점으로 변환 (하위 호환성)
+        if (scoreObj.score >= 1 && scoreObj.score <= 5) {
+          const mapping: Record<number, number> = { 1: 20, 2: 40, 3: 60, 4: 80, 5: 100 }
+          return mapping[Math.round(scoreObj.score)] || 0
+        }
+      }
+      // 하위 호환성: score_100 속성이 있는 경우
+      if (scoreObj && scoreObj.score_100) {
         return scoreObj.score_100
-      } else if (scoreObj.score) {
-        // 1-5점을 10/20/30/40/50점으로 변환 (발표 평가 방식)
-        const mapping: Record<number, number> = { 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 }
-        return mapping[Math.round(scoreObj.score)] || 0
       }
       return 0
     }
     
     if (proposalEval && presentationEval) {
-      // 제안서 70% + 발표 30% 가중 평균
-      finalScores = {
-        clarity: (getScoreValue(proposalEval.scores.clarity) * proposalWeight) + (getScoreValue(presentationEval.scores.clarity) * presentationWeight),
-        expertise: (getScoreValue(proposalEval.scores.expertise) * proposalWeight) + (getScoreValue(presentationEval.scores.expertise) * presentationWeight),
-        persuasiveness: (getScoreValue(proposalEval.scores.persuasiveness) * proposalWeight) + (getScoreValue(presentationEval.scores.persuasiveness) * presentationWeight),
-        logic: (getScoreValue(proposalEval.scores.logic) * proposalWeight) + (getScoreValue(presentationEval.scores.logic) * presentationWeight),
-        creativity: (getScoreValue(proposalEval.scores.creativity) * proposalWeight) + (getScoreValue(presentationEval.scores.creativity) * presentationWeight),
-        credibility: (getScoreValue(proposalEval.scores.credibility) * proposalWeight) + (getScoreValue(presentationEval.scores.credibility) * presentationWeight),
-        total: 0
-      }
+      // 제안서 70% + 발표 30% 가중 평균 (100점 만점)
+      const proposalTotalScore = proposalEval.total_score || 0
+      const presentationTotalScore = presentationEval.total_score || 0
       
-      finalScores.total = (finalScores.clarity + finalScores.expertise + finalScores.persuasiveness + 
-                          finalScores.logic + finalScores.creativity + finalScores.credibility) / 6
+      // 최종 통합 점수 계산 (프론트엔드와 동일한 방식)
+      const finalTotalScore = Math.round(proposalTotalScore * proposalWeight + presentationTotalScore * presentationWeight)
+      
+      finalScores = {
+        clarity: Math.round((getScoreValue(proposalEval.scores.clarity) * proposalWeight) + (getScoreValue(presentationEval.scores.clarity) * presentationWeight)),
+        expertise: Math.round((getScoreValue(proposalEval.scores.expertise) * proposalWeight) + (getScoreValue(presentationEval.scores.expertise) * presentationWeight)),
+        persuasiveness: Math.round((getScoreValue(proposalEval.scores.persuasiveness) * proposalWeight) + (getScoreValue(presentationEval.scores.persuasiveness) * presentationWeight)),
+        logic: Math.round((getScoreValue(proposalEval.scores.logic) * proposalWeight) + (getScoreValue(presentationEval.scores.logic) * presentationWeight)),
+        creativity: Math.round((getScoreValue(proposalEval.scores.creativity) * proposalWeight) + (getScoreValue(presentationEval.scores.creativity) * presentationWeight)),
+        credibility: Math.round((getScoreValue(proposalEval.scores.credibility) * proposalWeight) + (getScoreValue(presentationEval.scores.credibility) * presentationWeight)),
+        total: finalTotalScore
+      }
     } else if (proposalEval) {
       // 제안서만 있는 경우 - 실제 총점 사용 (60-100점 범위)
       finalScores = {
@@ -351,6 +362,9 @@ export class PDFGeneratorService {
         <div class="final-score">
             <div class="score">${finalScores.total.toFixed(1)}</div>
             <div>최종 종합 점수 (100점 만점)</div>
+            <div style="font-size: 12px; color: #6B7280; margin-top: 8px;">
+                계산 방식: 제안서 평가 × 70% + 발표 평가 × 30%
+            </div>
         </div>
     </div>
 
@@ -363,7 +377,7 @@ export class PDFGeneratorService {
             <div class="eval-card">
                 <h3>제안서 평가 (70% 반영)</h3>
                 <p><strong>제목:</strong> ${proposalEvaluation.proposal_title}</p>
-                <p><strong>총점:</strong> ${proposalEvaluation.total_score.toFixed(2)}/5.0</p>
+                <p><strong>총점:</strong> ${proposalEvaluation.total_score.toFixed(1)}점/100점 만점</p>
                 <div class="comment-box">
                     ${proposalEvaluation.overall_comment}
                 </div>
@@ -374,7 +388,7 @@ export class PDFGeneratorService {
             <div class="eval-card">
                 <h3>발표 평가 (30% 반영)</h3>
                 <p><strong>제목:</strong> ${presentationEvaluation.presentation_title}</p>
-                <p><strong>총점:</strong> ${presentationEvaluation.total_score.toFixed(2)}/5.0</p>
+                <p><strong>총점:</strong> ${presentationEvaluation.total_score.toFixed(1)}점/100점 만점</p>
                 <p><strong>말속도:</strong> ${presentationEvaluation.speech_metrics?.speech_speed || 'N/A'} WPM</p>
                 <p><strong>휴지 빈도:</strong> ${presentationEvaluation.speech_metrics?.pause_frequency || 'N/A'}</p>
                 <div class="comment-box">
