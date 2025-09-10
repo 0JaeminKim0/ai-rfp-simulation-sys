@@ -4218,10 +4218,10 @@ app.get('/results', (c) => {
                 const presentationElement = document.getElementById('presentation-weighted-score');
                 
                 if (proposalElement && proposalScore > 0) {
-                    proposalElement.title = `원점수 ${proposalScore}점 × 70% = ${proposalWeighted}점`;
+                    proposalElement.title = '원점수 ' + proposalScore + '점 × 70% = ' + proposalWeighted + '점';
                 }
                 if (presentationElement && presentationScore > 0) {
-                    presentationElement.title = `원점수 ${presentationScore}점 × 30% = ${presentationWeighted}점`;
+                    presentationElement.title = '원점수 ' + presentationScore + '점 × 30% = ' + presentationWeighted + '점';
                 }
                 document.getElementById('proposal-average-score').textContent = proposalScore + '점';
                 document.getElementById('presentation-average-score').textContent = presentationScore + '점';
