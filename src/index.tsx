@@ -4311,7 +4311,7 @@ app.get('/results', (c) => {
             function updateIntegratedResultsUI(proposalData, presentationData) {
                 console.log('[통합결과] Updating UI with data:', { proposalData, presentationData });
                 
-                // Calculate scores (100-point system)
+                // Calculate scores (100-point system) - Use actual data only
                 const proposalScore = proposalData?.total_score || 0;
                 const presentationScore = presentationData?.total_score || 0;
                 
@@ -4323,11 +4323,18 @@ app.get('/results', (c) => {
                 let actualProposalScore = proposalScore;
                 let actualPresentationScore = presentationScore;
                 
-                // Use demo data if no actual data is available
+                // Show warning if no actual data is available
                 if (!hasAnyData) {
-                    actualProposalScore = 83; // Demo proposal score
-                    actualPresentationScore = 78; // Demo presentation score
-                    console.log('[통합결과] Using demo data for display');
+                    console.warn('[통합결과] No actual evaluation data available');
+                    showErrorMessage('실제 평가 데이터가 없습니다. 제안서 평가와 발표 평가를 먼저 완료해 주세요.');
+                    return;
+                }
+                
+                // Show warning if only partial data is available
+                if (!hasProposalData || !hasPresentationData) {
+                    const missingType = !hasProposalData ? '제안서 평가' : '발표 평가';
+                    console.warn(`[통합결과] Missing ${missingType} data`);
+                    showErrorMessage(`${missingType} 데이터가 누락되었습니다. 정확한 통합 결과를 위해 두 평가를 모두 완료해 주세요.`);
                 }
                 
                 // Calculate weighted scores (70% proposal + 30% presentation)
@@ -4369,30 +4376,9 @@ app.get('/results', (c) => {
                 }
 
                 
-                // Use demo scores if no actual data is available
+                // Use only actual evaluation data
                 let proposalScores = proposalData?.scores;
                 let presentationScores = presentationData?.scores;
-                
-                if (!hasAnyData) {
-                    // Demo scores data (100-point scale)
-                    proposalScores = {
-                        clarity: { score: 85, feedback: "명확하고 체계적인 구성" },
-                        expertise: { score: 92, feedback: "뛰어난 전문성 보여줌" },
-                        persuasiveness: { score: 78, feedback: "설득력 있는 제안" },
-                        logic: { score: 88, feedback: "논리적인 접근" },
-                        creativity: { score: 70, feedback: "창의적 요소 보완 필요" },
-                        reliability: { score: 95, feedback: "높은 실현 가능성" }
-                    };
-                    
-                    presentationScores = {
-                        clarity: { score: 82, feedback: "발표 내용이 명확함" },
-                        expertise: { score: 90, feedback: "전문 지식 잘 전달" },
-                        persuasiveness: { score: 75, feedback: "청중 설득력 양호" },
-                        logic: { score: 85, feedback: "논리적 발표 구성" },
-                        creativity: { score: 68, feedback: "발표 방식 개선 여지" },
-                        reliability: { score: 88, feedback: "신뢰할 만한 내용" }
-                    };
-                }
                 
                 // Update detailed score breakdowns
                 if (proposalScores) {
@@ -4403,25 +4389,15 @@ app.get('/results', (c) => {
                     updateDetailedScores('presentation', presentationScores);
                 }
                 
-                // Update radar chart with data (actual or demo)
-                updateRadarChart(proposalScores, presentationScores);
+                // Update radar chart with actual data only
+                if (proposalScores && presentationScores) {
+                    updateRadarChart(proposalScores, presentationScores);
+                }
                 
-                // Update dynamic feedback based on evaluation data (actual or demo)
-                const displayProposalData = proposalData || { 
-                    key_strengths: ["체계적인 문제 분석", "실현 가능한 솔루션 제안"],
-                    improvement_areas: ["창의적 차별화 요소 강화"],
-                    overall_feedback: "전문적이고 체계적인 제안서입니다.",
-                    scores: proposalScores
-                };
-                
-                const displayPresentationData = presentationData || {
-                    key_strengths: ["명확한 전달력", "전문성 있는 설명"],
-                    improvement_areas: ["시각적 자료 활용도 개선"],
-                    overall_feedback: "안정적이고 설득력 있는 발표였습니다.",
-                    scores: presentationScores
-                };
-                
-                updateDynamicFeedback(displayProposalData, displayPresentationData, finalScore);
+                // Update dynamic feedback based on actual evaluation data only
+                if (proposalData && presentationData) {
+                    updateDynamicFeedback(proposalData, presentationData, finalScore);
+                }
             }
             
             function updateDetailedScores(type, scores) {
