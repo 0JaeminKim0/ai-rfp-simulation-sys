@@ -4264,7 +4264,7 @@ app.get('/results', (c) => {
                 };
                 
                 Object.entries(scoreMap).forEach(([key, field]) => {
-                    const element = document.getElementById(`${type}-${field}-score`);
+                    const element = document.getElementById(type + '-' + field + '-score');
                     if (element && scores[key]) {
                         const score = scores[key].score || 0;
                         element.textContent = score + '점';
@@ -4308,7 +4308,7 @@ app.get('/results', (c) => {
                     const presentationScore = presentationScores[type]?.score || 0;
                     const diff = Math.abs(proposalScore - presentationScore);
                     
-                    const diffElement = document.getElementById(`${type}-diff`);
+                    const diffElement = document.getElementById(type + '-diff');
                     if (diffElement) {
                         diffElement.textContent = diff.toFixed(1);
                     }
