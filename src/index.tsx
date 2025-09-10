@@ -3632,9 +3632,28 @@ app.get('/results', (c) => {
                             <div style="position: absolute; top: -10px; right: -10px; width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%;"></div>
                             <div style="font-size: 2.75rem; font-weight: 700; margin-bottom: var(--spacing-sm); text-shadow: 0 2px 4px rgba(0,0,0,0.2);" id="final-total-score">-</div>
                             <div style="font-size: 0.9rem; font-weight: 600; opacity: 0.95;">최종 통합 점수 (100점 만점)</div>
+                            <div style="font-size: 0.7rem; font-weight: 400; opacity: 0.8; margin-top: var(--spacing-xs);">제안서×70% + 발표×30%</div>
                             <div style="position: absolute; bottom: 5px; right: 10px;">
                                 <i class="fas fa-star" style="color: var(--pwc-white); font-size: 1.2rem; opacity: 0.7;"></i>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 가중치 설명 카드 -->
+                    <div style="margin-top: var(--spacing-lg); padding: var(--spacing-lg); background: linear-gradient(135deg, var(--pwc-gray-50), var(--pwc-white)); border-radius: var(--radius-lg); border: 2px solid var(--pwc-orange-light); text-align: center;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: var(--spacing-md); flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                                <i class="fas fa-calculator" style="color: var(--pwc-orange); font-size: 1.2rem;"></i>
+                                <span style="font-weight: 600; color: var(--pwc-navy); font-size: 1rem;">최종 점수 계산 방식:</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: var(--spacing-sm); font-family: 'Courier New', monospace; background: var(--pwc-white); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-md); border: 1px solid var(--pwc-orange-light);">
+                                <span style="color: var(--pwc-blue); font-weight: 700;">제안서 점수 × 70%</span>
+                                <span style="color: var(--pwc-gray-600); font-size: 1.2rem;">+</span>
+                                <span style="color: var(--pwc-purple); font-weight: 700;">발표 점수 × 30%</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: var(--spacing-sm); font-size: 0.875rem; color: var(--pwc-gray-600); font-style: italic;">
+                            📋 제안서가 전체 평가의 70%, 발표가 30%를 차지합니다
                         </div>
                     </div>
                 </div>
@@ -4058,12 +4077,34 @@ app.get('/results', (c) => {
                     proposalWeighted, presentationWeighted, finalScore 
                 });
                 
-                // Update main score displays
+                // Update main score displays with calculation details
                 document.getElementById('proposal-weighted-score').textContent = proposalWeighted + '점';
                 document.getElementById('presentation-weighted-score').textContent = presentationWeighted + '점';
                 document.getElementById('final-total-score').textContent = finalScore + '점';
+                
+                // Add calculation details tooltip or subtitle if elements exist
+                const proposalElement = document.getElementById('proposal-weighted-score');
+                const presentationElement = document.getElementById('presentation-weighted-score');
+                
+                if (proposalElement && proposalScore > 0) {
+                    proposalElement.title = `원점수 ${proposalScore}점 × 70% = ${proposalWeighted}점`;
+                }
+                if (presentationElement && presentationScore > 0) {
+                    presentationElement.title = `원점수 ${presentationScore}점 × 30% = ${presentationWeighted}점`;
+                }
                 document.getElementById('proposal-average-score').textContent = proposalScore + '점';
                 document.getElementById('presentation-average-score').textContent = presentationScore + '점';
+                
+                // Add tooltips showing weighted calculation
+                const proposalAvgElement = document.getElementById('proposal-average-score');
+                const presentationAvgElement = document.getElementById('presentation-average-score');
+                
+                if (proposalAvgElement) {
+                    proposalAvgElement.title = `가중치 적용: ${proposalScore}점 × 70% = ${proposalWeighted}점`;
+                }
+                if (presentationAvgElement) {
+                    presentationAvgElement.title = `가중치 적용: ${presentationScore}점 × 30% = ${presentationWeighted}점`;
+                }
                 
                 // Update detailed score breakdowns if data is available
                 if (proposalData && proposalData.scores) {
@@ -4174,7 +4215,7 @@ app.get('/results', (c) => {
                         data: {
                             labels: ['명확성', '전문성', '설득력', '논리성', '창의성', '신뢰성'],
                             datasets: [{
-                                label: '제안서 평가',
+                                label: '제안서 평가 (가중치 70%)',
                                 data: proposalData,
                                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                                 borderColor: '#3B82F6',
@@ -4183,7 +4224,7 @@ app.get('/results', (c) => {
                                 pointBorderWidth: 2,
                                 borderWidth: 2
                             }, {
-                                label: '발표 평가',
+                                label: '발표 평가 (가중치 30%)',
                                 data: presentationData,
                                 backgroundColor: 'rgba(168, 85, 247, 0.1)',
                                 borderColor: '#A855F7',
