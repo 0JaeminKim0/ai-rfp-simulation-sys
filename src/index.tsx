@@ -499,6 +499,7 @@ app.post('/api/customers/rfp-analysis', async (c) => {
     }
 
     console.log(`📝 텍스트 추출 성공: ${extractedText.length}자 - 분석 시작`)
+    console.log(`🔥 === 새로운 코드 테스트 - 이 로그가 보이면 코드가 적용됨 ===`)
     
     // RFP 분석 서비스 실행
     const rfpAnalysis = new RfpAnalysisService(env.OPENAI_API_KEY)
