@@ -4187,12 +4187,8 @@ app.get('/results', (c) => {
             const ctx = document.getElementById('radarChart').getContext('2d');
             
             // Chart will be initialized by loadIntegratedResultsData() function
-            // Initial empty chart creation is handled dynamically with actual data
-                type: 'radar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-
+            // FIXED: JavaScript syntax error resolved
+            let radarChart = null;
 
             async function downloadReport() {
                 try {
