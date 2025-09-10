@@ -634,7 +634,7 @@ class PresentationEvaluationApp {
     document.getElementById('persuasiveness-score').textContent = evaluationData.scores.persuasiveness.score + '점'
     document.getElementById('logic-score').textContent = evaluationData.scores.logic.score + '점'
     document.getElementById('creativity-score').textContent = evaluationData.scores.creativity.score + '점'
-    document.getElementById('credibility-score').textContent = evaluationData.scores.credibility.score + '점'
+    document.getElementById('reliability-score').textContent = evaluationData.scores.reliability.score + '점'
     
     // 총점 표시 (100점 만점)
     document.getElementById('total-score').textContent = Math.round(evaluationData.total_score) + '점'

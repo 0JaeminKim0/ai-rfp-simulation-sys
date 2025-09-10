@@ -3217,7 +3217,7 @@ app.get('/proposal-evaluation', (c) => {
                         <div style="font-size: 0.875rem; font-weight: 600; color: var(--pwc-orange); word-break: keep-all;">창의성</div>
                     </div>
                     <div style="text-align: center; padding: var(--spacing-lg); background: linear-gradient(135deg, rgba(230, 0, 18, 0.1), rgba(230, 0, 18, 0.05)); border-radius: var(--radius-lg); border: 1px solid rgba(230, 0, 18, 0.2);">
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--pwc-error); margin-bottom: var(--spacing-xs);" id="credibility-score">-</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--pwc-error); margin-bottom: var(--spacing-xs);" id="reliability-score">-</div>
                         <div style="font-size: 0.875rem; font-weight: 600; color: var(--pwc-error); word-break: keep-all;">신뢰성</div>
                     </div>
                 </div>
@@ -3775,7 +3775,7 @@ app.get('/presentation-evaluation', (c) => {
                             <i class="fas fa-lightbulb" style="position: absolute; top: var(--spacing-sm); right: var(--spacing-sm); opacity: 0.3; font-size: 1.5rem;"></i>
                         </div>
                         <div style="text-align: center; padding: var(--spacing-lg); background: linear-gradient(135deg, var(--pwc-error), #cc000f); border-radius: var(--radius-lg); color: var(--pwc-white); position: relative; overflow: hidden;">
-                            <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: var(--spacing-xs);" id="credibility-score">-</div>
+                            <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: var(--spacing-xs);" id="reliability-score">-</div>
                             <div style="font-weight: 600; font-size: 0.95rem;">신뢰성</div>
                             <i class="fas fa-shield-alt" style="position: absolute; top: var(--spacing-sm); right: var(--spacing-sm); opacity: 0.3; font-size: 1.5rem;"></i>
                         </div>
