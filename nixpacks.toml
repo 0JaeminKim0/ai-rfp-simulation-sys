@@ -5,7 +5,7 @@ nixPkgs = ['nodejs-20_x', 'npm-10_x']
 cmds = ['npm install --legacy-peer-deps']
 
 [phases.build]
-cmds = ['RAILWAY=true npm run build']
+cmds = ['npm run build:railway']
 
 [start]
 cmd = 'npm start'

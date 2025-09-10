@@ -13,33 +13,18 @@ console.log(`🆔 Railway Service ID: ${process.env.RAILWAY_SERVICE_ID || 'N/A'}
 console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✅ 설정됨 (길이: ' + process.env.OPENAI_API_KEY.length + ')' : '❌ 미설정'}`)
 
 try {
-  // 빌드된 앱 임포트 시도
+  // 빌드된 앱 임포트
   let app;
   
-  try {
-    // ES modules 방식 시도
-    const module = await import('./dist/index.js')
-    app = module.default || module
-  } catch (importError) {
-    console.error('Import error:', importError.message)
-    
-    // fallback: CommonJS 방식 시도  
-    const module = require('./dist/index.js')
-    app = module.default || module
-  }
+  console.log('📦 Importing built application...')
+  const module = await import('./dist/index.js')
+  app = module.default || module
 
   if (!app || typeof app.fetch !== 'function') {
     throw new Error('Invalid app: missing fetch method')
   }
 
   console.log('✅ App imported successfully')
-
-  // Railway 헬스체크를 위한 간단한 엔드포인트 추가
-  app.get('/health', (c) => c.json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    port: port 
-  }))
 
   // Railway 환경에서 정적 파일 서빙
   app.use('/static/*', serveStatic({ root: './public' }))
@@ -58,7 +43,8 @@ try {
   })
 
   console.log(`✅ Server running on http://0.0.0.0:${port}`)
-  console.log(`🔗 Health check: http://localhost:${port}/api/health`)
+  console.log(`🔗 Health check: http://localhost:${port}/health`)
+  console.log(`🔗 API Health check: http://localhost:${port}/api/health`)
   console.log(`🌐 Railway URL: ${process.env.RAILWAY_STATIC_URL || 'N/A'}`)
   
 } catch (error) {

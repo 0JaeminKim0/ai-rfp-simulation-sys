@@ -156,12 +156,24 @@ async function generateNLPRfpAnalysis(text: string, fileName: string) {
 
 // === API 라우트 ===
 
-// 헬스 체크 엔드포인트
+// 헬스 체크 엔드포인트 (Railway용 루트 경로)
+app.get('/health', (c) => {
+  return c.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'RFP AI Virtual Customer Simulator',
+    environment: typeof globalThis.process !== 'undefined' ? 'Railway' : 'Cloudflare Workers',
+    port: typeof globalThis.process !== 'undefined' ? process.env.PORT : 'N/A'
+  })
+})
+
+// 헬스 체크 엔드포인트 (API 경로)
 app.get('/api/health', (c) => {
   return c.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'RFP AI Virtual Customer Simulator'
+    service: 'RFP AI Virtual Customer Simulator',
+    environment: typeof globalThis.process !== 'undefined' ? 'Railway' : 'Cloudflare Workers'
   })
 })
 

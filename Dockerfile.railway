@@ -13,8 +13,8 @@ RUN npm install --legacy-peer-deps
 # 소스 코드 복사
 COPY . .
 
-# Railway 환경에서 빌드
-RUN RAILWAY=true npm run build
+# Railway 환경에서 빌드 (TypeScript 런타임 사용)
+RUN npm run build:railway
 
 # 포트 노출
 EXPOSE ${PORT:-3000}
