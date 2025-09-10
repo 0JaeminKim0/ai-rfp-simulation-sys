@@ -27,11 +27,97 @@ export class PdfParserService {
       page_count: number
       file_size: number
     }
+    extraction_method: 'pdf-parse' | 'pdf-lib' | 'fallback'
+  }> {
+    
+    try {
+      console.log(`📄 PDF 파싱 시작: ${fileName} (${pdfBuffer.byteLength} bytes)`)
+      
+      // Railway 환경에서 pdf-parse 사용 시도
+      try {
+        const pdfParse = require('pdf-parse')
+        const uint8Buffer = Buffer.from(pdfBuffer)
+        
+        console.log('🚀 pdf-parse 라이브러리 사용 중...')
+        const pdfData = await pdfParse(uint8Buffer)
+        
+        console.log(`✅ PDF 파싱 성공: ${pdfData.text.length}자, ${pdfData.numpages}페이지 (pdf-parse)`)
+        
+        // 페이지별 텍스트 분할 시도
+        const textPerPage = Math.ceil(pdfData.text.length / pdfData.numpages)
+        const pages = []
+        
+        for (let i = 0; i < pdfData.numpages; i++) {
+          const start = i * textPerPage
+          const end = Math.min((i + 1) * textPerPage, pdfData.text.length)
+          const pageContent = pdfData.text.substring(start, end).trim()
+          
+          if (pageContent.length > 0) {
+            pages.push({
+              page_number: i + 1,
+              content: pageContent,
+              word_count: pageContent.split(/\s+/).length
+            })
+          }
+        }
+        
+        const metadata = {
+          title: pdfData.info?.Title || undefined,
+          author: pdfData.info?.Author || undefined,
+          subject: pdfData.info?.Subject || undefined,
+          creator: pdfData.info?.Creator || undefined,
+          creation_date: pdfData.info?.CreationDate || undefined,
+          modification_date: pdfData.info?.ModDate || undefined,
+          page_count: pdfData.numpages,
+          file_size: pdfBuffer.byteLength
+        }
+
+        return {
+          text: pdfData.text,
+          pages: pages,
+          metadata: metadata,
+          extraction_method: 'pdf-parse'
+        }
+        
+      } catch (pdfParseError) {
+        console.log(`⚠️ pdf-parse 실패, pdf-lib 대안 시도: ${pdfParseError.message}`)
+        return this.extractWithPdfLib(pdfBuffer, fileName)
+      }
+      
+    } catch (error) {
+      console.error('❌ PDF 파싱 완전 실패:', error)
+      throw new Error(`PDF 파싱 오류: ${error.message}`)
+    }
+  }
+  
+  /**
+   * PDF-lib을 사용한 대안 파싱
+   */
+  private async extractWithPdfLib(
+    pdfBuffer: ArrayBuffer | Uint8Array,
+    fileName: string
+  ): Promise<{
+    text: string
+    pages: Array<{
+      page_number: number
+      content: string
+      word_count: number
+    }>
+    metadata: {
+      title?: string
+      author?: string
+      subject?: string
+      creator?: string
+      creation_date?: string
+      modification_date?: string
+      page_count: number
+      file_size: number
+    }
     extraction_method: 'pdf-lib' | 'fallback'
   }> {
     
     try {
-      console.log(`PDF 파싱 시작: ${fileName}`)
+      console.log(`🔄 pdf-lib 방식으로 PDF 파싱: ${fileName}`)
       
       // PDF 문서 로드
       const pdfDoc = await PDFDocument.load(pdfBuffer)
@@ -49,21 +135,20 @@ export class PdfParserService {
         file_size: pdfBuffer.byteLength
       }
 
-      console.log(`PDF 메타데이터 추출 완료: ${pageCount}페이지`)
+      console.log(`📋 PDF 메타데이터 추출: ${pageCount}페이지`)
 
-      // 현재 pdf-lib로는 직접 텍스트 추출이 어려우므로
-      // Cloudflare Workers 환경에서 사용 가능한 대안 방식 사용
+      // 패턴 매칭 방식 텍스트 추출
       const extractionResult = await this.extractWithFallbackMethod(pdfBuffer)
       
       const pages = extractionResult.pages.map((content, index) => ({
         page_number: index + 1,
         content: content,
-        word_count: content.length
+        word_count: content.split(/\s+/).length
       }))
 
       const allText = pages.map(page => page.content).join('\n\n')
 
-      console.log(`PDF 텍스트 추출 완료: ${allText.length}자`)
+      console.log(`📋 PDF-lib 텍스트 추출 완료: ${allText.length}자`)
 
       return {
         text: allText,
@@ -73,8 +158,8 @@ export class PdfParserService {
       }
       
     } catch (error) {
-      console.error('PDF 파싱 오류:', error)
-      throw new Error(`PDF 파싱 실패: ${error.message}`)
+      console.error('❌ PDF-lib도 실패:', error)
+      throw new Error(`PDF 파싱 완전 실패: ${error.message}`)
     }
   }
 
