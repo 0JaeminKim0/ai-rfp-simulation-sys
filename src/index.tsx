@@ -4557,11 +4557,15 @@ app.get('/results', (c) => {
             
             function showErrorMessage(message) {
                 const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = `
-                    position: fixed; top: 20px; right: 20px; z-index: 1000;
-                    background: var(--error-color); color: white; padding: 1rem;
-                    border-radius: 8px; box-shadow: var(--shadow-lg);
-                `;
+                errorDiv.style.position = 'fixed';
+                errorDiv.style.top = '20px';
+                errorDiv.style.right = '20px';
+                errorDiv.style.zIndex = '1000';
+                errorDiv.style.background = 'var(--error-color)';
+                errorDiv.style.color = 'white';
+                errorDiv.style.padding = '1rem';
+                errorDiv.style.borderRadius = '8px';
+                errorDiv.style.boxShadow = 'var(--shadow-lg)';
                 errorDiv.textContent = message;
                 document.body.appendChild(errorDiv);
                 
