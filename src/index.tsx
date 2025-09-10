@@ -1255,16 +1255,26 @@ app.post('/api/evaluations/presentation', async (c) => {
     const { customer_id, presentation_title, stt_transcript, speech_metrics } = await c.req.json()
     const { env } = c
     
-    const storage = new JsonStorageService(env.KV)
+    console.log(`🎤 실제 발표 평가 시작: customer_id=${customer_id}`)
     
-    // AI 가상고객 로드
-    const customer = await storage.getVirtualCustomer(customer_id)
+    // Railway 환경용 고객 조회
+    let customer = null
+    for (const [key, value] of globalMemoryStore.entries()) {
+      if (key.startsWith('customer:') && (value.id === customer_id || value.customer_id === customer_id)) {
+        customer = value
+        break
+      }
+    }
+    
     if (!customer) {
+      console.log('❌ 고객 정보 없음')
       return c.json({
         success: false,
         error: 'AI 가상고객을 찾을 수 없습니다.'
       }, 404)
     }
+    
+    console.log(`👤 고객 발견: ${customer.company_name}`)
     
     let presentationEvaluation
     
@@ -1299,22 +1309,26 @@ app.post('/api/evaluations/presentation', async (c) => {
           average_volume_level: 0.75
         },
         scores: {
-          clarity: { score: 4, comment: '발표 내용이 명확하고 체계적으로 구성되어 있습니다.' },
-          expertise: { score: 5, comment: '화학산업과 ESG 분야의 전문성이 뛰어나게 드러납니다.' },
-          persuasiveness: { score: 4, comment: '고객의 니즈를 정확히 파악하고 해결방안을 논리적으로 제시했습니다.' },
-          logic: { score: 4, comment: '논리적 흐름이 체계적이고 근거가 타당합니다.' },
-          creativity: { score: 3, comment: '안정적이고 검증된 접근법이지만, 혁신적이고 차별화된 아이디어가 더 필요합니다.' },
-          credibility: { score: 5, comment: 'PwC의 브랜드 신뢰도와 화학산업 프로젝트 경험이 매우 신뢰할 만합니다.' }
+          clarity: { score: 80, comment: '발표 내용이 명확하고 체계적으로 구성되어 있습니다.' },
+          expertise: { score: 100, comment: '화학산업과 ESG 분야의 전문성이 뛰어나게 드러납니다.' },
+          persuasiveness: { score: 80, comment: '고객의 니즈를 정확히 파악하고 해결방안을 논리적으로 제시했습니다.' },
+          logic: { score: 80, comment: '논리적 흐름이 체계적이고 근거가 타당합니다.' },
+          creativity: { score: 60, comment: '안정적이고 검증된 접근법이지만, 혁신적이고 차별화된 아이디어가 더 필요합니다.' },
+          credibility: { score: 100, comment: 'PwC의 브랜드 신뢰도와 화학산업 프로젝트 경험이 매우 신뢰할 만합니다.' }
         },
-        total_score: 84,
+        total_score: 83,
         overall_feedback: '화학산업 전문성과 ESG 대응 역량이 우수하며, 체계적이고 실현가능한 실행 계획을 제시했습니다. 발표 스킬 면에서는 명확한 전달력을 보였나, 더욱 창의적이고 혁신적인 차별화 요소를 강화하면 경쟁력이 높아질 것입니다. 전반적으로 신뢰할 수 있는 우수한 발표였습니다.',
         created_at: new Date().toISOString()
       }
       console.log('기본 발표 평가 완료')
     }
     
-    // 결과 저장
-    const evaluationId = await storage.savePresentationEvaluation(presentationEvaluation)
+    // 결과 저장 (Railway 환경에서는 메모리 저장)
+    const evaluationId = `eval-${Date.now()}`
+    const evaluationKey = `evaluation:${evaluationId}`
+    globalMemoryStore.set(evaluationKey, { ...presentationEvaluation, id: evaluationId })
+    
+    console.log(`✅ 발표 평가 완료: ${evaluationId}`)
     
     return c.json({
       success: true,
