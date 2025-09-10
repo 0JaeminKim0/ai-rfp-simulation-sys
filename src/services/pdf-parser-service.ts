@@ -1,6 +1,7 @@
 // PDF/문서 파싱 서비스 - PDF.js + OCR + LLM
 
 import { PDFDocument } from 'pdf-lib'
+import JSZip from 'jszip'
 
 export class PdfParserService {
   
@@ -311,8 +312,12 @@ export class PdfParserService {
     try {
       console.log(`📄 DOCX 파싱 시작: ${fileName} (${docxBuffer.byteLength} bytes)`)
       
-      // Railway 환경에서 JSZip 사용 가능
-      const JSZip = require('jszip')
+      // ES modules로 JSZip 사용 (안전한 방식)
+      if (!JSZip) {
+        console.warn('⚠️ JSZip을 로드할 수 없음, 대안 방법 사용')
+        return this.extractDocxFallback(docxBuffer, fileName)
+      }
+      
       const zip = new JSZip()
       
       // DOCX 파일 로드 (ZIP으로 압축된 XML 파일들)
@@ -385,6 +390,11 @@ export class PdfParserService {
       
     } catch (error) {
       console.error('❌ JSZip DOCX 파싱 오류:', error)
+      console.log('🔍 에러 상세:', {
+        message: error.message,
+        stack: error.stack?.substring(0, 200),
+        jszip_available: !!JSZip
+      })
       console.log('🔄 대안 방법으로 재시도...')
       return this.extractDocxFallback(docxBuffer, fileName)
     }
