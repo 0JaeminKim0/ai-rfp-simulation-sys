@@ -4332,9 +4332,13 @@ app.get('/results', (c) => {
                 
                 // Show warning if only partial data is available
                 if (!hasProposalData || !hasPresentationData) {
-                    const missingType = !hasProposalData ? '제안서 평가' : '발표 평가';
-                    console.warn(`[통합결과] Missing ${missingType} data`);
-                    showErrorMessage(`${missingType} 데이터가 누락되었습니다. 정확한 통합 결과를 위해 두 평가를 모두 완료해 주세요.`);
+                    if (!hasProposalData) {
+                        console.warn('[통합결과] Missing proposal evaluation data');
+                        showErrorMessage('제안서 평가 데이터가 누락되었습니다. 정확한 통합 결과를 위해 두 평가를 모두 완료해 주세요.');
+                    } else {
+                        console.warn('[통합결과] Missing presentation evaluation data');
+                        showErrorMessage('발표 평가 데이터가 누락되었습니다. 정확한 통합 결과를 위해 두 평가를 모두 완료해 주세요.');
+                    }
                 }
                 
                 // Calculate weighted scores (70% proposal + 30% presentation)
