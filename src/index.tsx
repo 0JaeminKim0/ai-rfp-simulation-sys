@@ -3171,7 +3171,7 @@ app.get('/customer-generation', (c) => {
         </main>
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-        <script src="/static/customer-generation.js?v=1.4"></script>
+        <script src="/static/customer-generation.js?v=1.5"></script>
     </body>
     </html>
   `)

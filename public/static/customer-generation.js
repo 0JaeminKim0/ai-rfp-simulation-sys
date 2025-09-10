@@ -229,20 +229,47 @@ class CustomerGenerationApp {
         console.log('🔥 RFP 분석 API 응답 성공:', response.data)
         console.log('🔍 분석된 데이터 구조:', Object.keys(response.data.data))
         
-        // 파일 업로드 API 응답을 표준 형식으로 변환
-        const convertedData = this.convertRfpDataFormat(response.data.data)
-        console.log('🎯 변환된 데이터 샘플:', convertedData["1"])
+        // ChunkedOpenAIService는 이미 표준 형식 {1: {...}, 2: {...}} 반환
+        // LLM 분석 결과인지 NLP 폴백 결과인지에 따라 처리
+        let processedData
         
-        this.rfpAnalysisData = convertedData
+        if (response.data.data && typeof response.data.data === 'object') {
+          // 데이터가 {1: {}, 2: {}} 형식인지 확인
+          if (response.data.data["1"] && response.data.data["1"].name) {
+            // 이미 표준 형식 - 바로 사용
+            processedData = response.data.data
+            console.log('🎯 LLM 분석 결과 (표준 형식):', processedData["1"])
+          } else {
+            // NLP 폴백 형식 - 변환 필요
+            processedData = this.convertRfpDataFormat(response.data.data)
+            console.log('🎯 NLP 폴백 결과 (변환됨):', processedData["1"])
+          }
+        } else {
+          // 예상치 못한 형식 - 폴백 처리
+          processedData = this.createEmptyRfpData()
+          console.warn('⚠️ 예상치 못한 데이터 형식, 빈 데이터로 폴백')
+        }
+        
+        this.rfpAnalysisData = processedData
         
         // 데이터 검증
         const dataCount = Object.keys(this.rfpAnalysisData).length
         console.log(`📊 총 ${dataCount}개 속성 로드됨`)
         
-        // 각 속성의 content 확인
+        // 각 속성의 content 확인 및 LLM 분석 여부 판단
         Object.entries(this.rfpAnalysisData).forEach(([key, attr]) => {
           console.log(`${key}: ${attr.name} = "${attr.content}"`)
         })
+        
+        // LLM vs 폴백 분석 결과 판단
+        const isLLMAnalysis = this.detectLLMAnalysis(this.rfpAnalysisData)
+        console.log(`🧠 분석 방식: ${isLLMAnalysis ? 'LLM 분석 성공' : 'NLP/폴백 분석'}`)
+        
+        if (isLLMAnalysis) {
+          console.log('✅ 실제 GPT-4o 분석 결과를 받았습니다!')
+        } else {
+          console.log('⚠️ LLM 분석 실패로 폴백 데이터를 사용했습니다.')
+        }
         
         this.displayRfpResults()
         this.checkGenerationReady()
@@ -399,6 +426,30 @@ RFP 문서 분석을 위한 기본 정보:
     return card
   }
 
+  // 빈 RFP 데이터 생성 (예상치 못한 오류 시 폴백)
+  createEmptyRfpData() {
+    const emptyData = {}
+    const attributeNames = [
+      '발주사명', '발주부서', '프로젝트 배경', '프로젝트 목표', '프로젝트 범위',
+      '프로젝트 기간', '프로젝트 예산', '평가기준', '요구 산출물', '입찰사 요건',
+      '준수사항', '리스크 관리 조건', '필수 역량', '진행 일정', '특이조건/기타 요구'
+    ]
+    
+    for (let i = 1; i <= 15; i++) {
+      emptyData[i.toString()] = {
+        id: i.toString(),
+        name: attributeNames[i-1],
+        content: '분석 중 오류 발생 - 다시 시도해주세요',
+        source_snippet: '오류로 인한 폴백 데이터',
+        page_number: 1,
+        section_title: '오류',
+        extracted_at: new Date().toISOString()
+      }
+    }
+    
+    return emptyData
+  }
+
   // 파일 업로드 API 응답을 표준 15속성 형식으로 변환
   convertRfpDataFormat(rawData) {
     const attributeMapping = {
@@ -435,6 +486,38 @@ RFP 문서 분석을 위한 기본 정보:
     })
 
     return convertedData
+  }
+
+  // LLM 분석 결과인지 폴백 데이터인지 감지
+  detectLLMAnalysis(data) {
+    if (!data || !data["1"]) return false
+    
+    // LLM 분석의 특징: 구체적이고 상세한 내용, 실제 문서 기반
+    const firstItem = data["1"]
+    const content = firstItem.content || ''
+    
+    // 폴백 데이터의 특징적 패턴들
+    const fallbackPatterns = [
+      '업로드된 RFP 발주기관',
+      '관련 부서',
+      '디지털 혁신 및 성장 동력',
+      '전사 차원의 시스템',
+      '제안서 내 구체적 견적',
+      '기술력 70%, 가격경쟁력 30%',
+      '기술 전문성 및 프로젝트 관리'
+    ]
+    
+    // 폴백 패턴이 발견되면 LLM 분석이 아님
+    const hasFallbackPattern = fallbackPatterns.some(pattern => 
+      content.includes(pattern)
+    )
+    
+    // source_snippet에 실제 원문이 포함되어 있는지 확인
+    const hasRealSourceSnippet = firstItem.source_snippet && 
+      !firstItem.source_snippet.includes('담당부서 또는 연락처') &&
+      !firstItem.source_snippet.includes('실제 파일에서 추출')
+    
+    return !hasFallbackPattern && (hasRealSourceSnippet || content.length > 20)
   }
 
   checkGenerationReady() {
