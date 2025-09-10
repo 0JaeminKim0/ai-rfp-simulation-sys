@@ -1164,39 +1164,40 @@ app.post('/api/evaluations/proposal', async (c) => {
       const companyName = customer.company_name || '고객사'
       const customerType = customer.customer_type || 'CTO'
       
-      // 고객 유형별 맞춤 평가
+      // 고객 유형별 맞춤 평가 (100점 만점으로 통일)
       let baseScores = {
-        clarity: { score: 4, comment: '제안서 구조가 명확하고 이해하기 쉽게 작성되었습니다.' },
-        expertise: { score: 4, comment: `${companyName}의 ${customerType} 관점에서 기술적 전문성이 적절히 드러납니다.` },
-        persuasiveness: { score: 3, comment: `${customerType}의 주요 관심사에 더 집중된 가치 제안이 필요합니다.` },
-        logic: { score: 4, comment: '논리적 흐름과 근거 제시가 체계적입니다.' },
-        creativity: { score: 3, comment: '혁신적 접근법을 더 강화하면 경쟁력이 높아질 것입니다.' },
-        credibility: { score: 4, comment: '제안 내용의 실현 가능성과 업체 신뢰도가 양호합니다.' }
+        clarity: { score: 80, comment: '제안서 구조가 명확하고 이해하기 쉽게 작성되었습니다.' },
+        expertise: { score: 80, comment: `${companyName}의 ${customerType} 관점에서 기술적 전문성이 적절히 드러납니다.` },
+        persuasiveness: { score: 75, comment: `${customerType}의 주요 관심사에 더 집중된 가치 제안이 필요합니다.` },
+        logic: { score: 80, comment: '논리적 흐름과 근거 제시가 체계적입니다.' },
+        creativity: { score: 75, comment: '혁신적 접근법을 더 강화하면 경쟁력이 높아질 것입니다.' },
+        credibility: { score: 80, comment: '제안 내용의 실현 가능성과 업체 신뢰도가 양호합니다.' }
       }
       
-      // 고객 페르소나 특성 반영 조정
+      // 고객 페르소나 특성 반영 조정 (100점 체계)
       if (customerPersona.strategic_focus?.includes('혁신')) {
-        baseScores.creativity.score = Math.min(5, baseScores.creativity.score + 1)
+        baseScores.creativity.score = Math.min(100, baseScores.creativity.score + 10)
         baseScores.creativity.comment = '혁신 지향적 고객 특성에 부합하는 창의적 접근이 돋보입니다.'
       }
       
       if (customerPersona.risk_appetite?.includes('보수')) {
-        baseScores.credibility.score = Math.min(5, baseScores.credibility.score + 1)
+        baseScores.credibility.score = Math.min(100, baseScores.credibility.score + 10)
         baseScores.credibility.comment = '안정성과 검증된 방법론을 중시하는 고객에게 적합한 신뢰도를 보여줍니다.'
       }
       
       if (customerPersona.budget_sensitivity?.includes('효율') || customerPersona.budget_sensitivity?.includes('민감')) {
-        baseScores.persuasiveness.score = Math.max(2, baseScores.persuasiveness.score - 1)
+        baseScores.persuasiveness.score = Math.max(60, baseScores.persuasiveness.score - 10)
         baseScores.persuasiveness.comment = '비용 효율성에 대한 구체적인 근거와 ROI 분석이 더 필요합니다.'
       }
       
+      // 가중평균 계산 (100점 만점)
       const totalScore = Math.round(
-        (baseScores.clarity.score * 15 + 
-         baseScores.expertise.score * 25 + 
-         baseScores.persuasiveness.score * 20 + 
-         baseScores.logic.score * 20 + 
-         baseScores.creativity.score * 10 + 
-         baseScores.credibility.score * 10) / 5
+        (baseScores.clarity.score * 0.15 + 
+         baseScores.expertise.score * 0.25 + 
+         baseScores.persuasiveness.score * 0.20 + 
+         baseScores.logic.score * 0.20 + 
+         baseScores.creativity.score * 0.10 + 
+         baseScores.credibility.score * 0.10)
       )
       
       proposalEvaluation = {
