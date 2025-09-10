@@ -1638,6 +1638,10 @@ JSON 응답:
 
     // 15초 타임아웃으로 실제 LLM 호출
     let result = fallback
+    let usedLLM = false
+    
+    console.log(`🚀 딥리서치 분석 모드: ${OPENAI_API_KEY ? 'LLM 시도' : 'API 키 없음 - 폴백만'}`)
+    
     try {
       const openai = new ChunkedOpenAIService(OPENAI_API_KEY)
       const response = await Promise.race([
@@ -1654,16 +1658,19 @@ JSON 응답:
       const content = response.choices[0].message.content
       if (content) {
         result = JSON.parse(content)
-        console.log(`✅ 데모2 딥리서치 LLM 성공: ${company_name}`)
+        usedLLM = true
+        console.log(`🎯 [딥리서치] LLM 분석 성공: ${company_name} - 실제 GPT-4o 사용됨`)
       }
     } catch (error) {
-      console.log(`⚠️ 데모2 딥리서치 LLM 실패, 폴백 사용: ${error.message}`)
+      console.log(`📋 [딥리서치] LLM 실패, 폴백 데이터 사용: ${company_name} - 이유: ${error.message}`)
     }
 
     return c.json({
       success: true,
       data: result,
-      message: `데모2: ${company_name} 실제 LLM 딥리서치 완료 (15개 핵심 속성)`
+      message: usedLLM ? 
+        `🎯 ${company_name} 실제 LLM 딥리서치 완료 (GPT-4o 분석)` : 
+        `📋 ${company_name} 폴백 딥리서치 완료 (데모 데이터)`
     })
   } catch (error) {
     return c.json({
@@ -4118,5 +4125,35 @@ function generateBasicRfpAnalysis(extractedText: string, fileName: string) {
     }
   }
 }
+
+// API 키 상태 확인 엔드포인트 (디버깅용)
+app.get('/api/debug/openai-status', (c) => {
+  try {
+    const { env } = c
+    const OPENAI_API_KEY = env.OPENAI_API_KEY
+    
+    const status = {
+      has_api_key: !!OPENAI_API_KEY,
+      key_length: OPENAI_API_KEY ? OPENAI_API_KEY.length : 0,
+      key_prefix: OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 7) + '...' : 'none',
+      is_test_key: OPENAI_API_KEY ? (OPENAI_API_KEY.includes('fake') || OPENAI_API_KEY.includes('test')) : false,
+      starts_with_sk: OPENAI_API_KEY ? OPENAI_API_KEY.startsWith('sk-') : false,
+      environment: 'development'
+    }
+    
+    return c.json({
+      success: true,
+      status: status,
+      message: status.has_api_key ? 
+        (status.is_test_key ? 'Test/Fake API key detected' : 'API key configured') : 
+        'No API key found'
+    })
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'API key check failed'
+    }, 500)
+  }
+})
 
 export default app
