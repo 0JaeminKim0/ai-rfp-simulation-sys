@@ -459,6 +459,9 @@ app.post('/api/customers/rfp-analysis', async (c) => {
         const docxResult = await pdfParser.extractTextFromDocx(fileBuffer, fileName)
         extractedText = docxResult.text
         console.log(`✅ DOCX 텍스트 추출 완료: ${extractedText.length}자`)
+      } else if (fileValidation.fileType === 'txt') {
+        extractedText = new TextDecoder('utf-8').decode(fileBuffer)
+        console.log(`✅ TXT 텍스트 추출 완료: ${extractedText.length}자`)
       }
     } catch (extractError) {
       console.error('❌ 텍스트 추출 오류:', extractError)
@@ -3168,7 +3171,7 @@ app.get('/customer-generation', (c) => {
         </main>
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-        <script src="/static/customer-generation.js?v=1.2"></script>
+        <script src="/static/customer-generation.js?v=1.4"></script>
     </body>
     </html>
   `)

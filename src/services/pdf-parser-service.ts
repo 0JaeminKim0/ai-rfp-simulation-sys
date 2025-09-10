@@ -478,7 +478,7 @@ export class PdfParserService {
    */
   validateFileType(buffer: ArrayBuffer, fileName: string): {
     isValid: boolean
-    fileType: 'pdf' | 'docx' | 'unknown'
+    fileType: 'pdf' | 'docx' | 'txt' | 'unknown'
     mimeType: string
   } {
     const uint8Array = new Uint8Array(buffer)
@@ -499,6 +499,21 @@ export class PdfParserService {
         isValid: true,
         fileType: 'docx',
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      }
+    }
+
+    // TXT 파일 검증 (파일 확장자와 텍스트 내용 검사)
+    if (fileName.toLowerCase().endsWith('.txt')) {
+      try {
+        // UTF-8 텍스트인지 검증
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(buffer)
+        return {
+          isValid: true,
+          fileType: 'txt',
+          mimeType: 'text/plain'
+        }
+      } catch (e) {
+        // UTF-8 디코딩 실패 시 바이너리 파일로 간주
       }
     }
     
