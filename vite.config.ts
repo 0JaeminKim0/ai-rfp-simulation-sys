@@ -9,7 +9,7 @@ export default defineConfig({
     : [pages()], // Cloudflare: Workers 빌드
   build: {
     outDir: 'dist',
-    target: isRailwayBuild ? 'node18' : 'esnext',
+    target: isRailwayBuild ? 'es2020' : 'esnext', // es2020으로 변경하여 더 호환성 확보
     lib: isRailwayBuild ? {
       entry: 'src/index.tsx',
       formats: ['es'],
@@ -21,6 +21,14 @@ export default defineConfig({
       output: {
         format: 'es'
       }
-    } : undefined
-  }
+    } : undefined,
+    // Railway 빌드 최적화
+    minify: isRailwayBuild ? 'esbuild' : true,
+    sourcemap: isRailwayBuild ? false : true
+  },
+  // esbuild 옵션 추가 (Railway 호환성)
+  esbuild: isRailwayBuild ? {
+    target: 'es2020',
+    charset: 'utf8'
+  } : undefined
 })
