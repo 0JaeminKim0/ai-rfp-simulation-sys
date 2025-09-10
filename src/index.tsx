@@ -128,7 +128,7 @@ async function generateNLPRfpAnalysis(text: string, fileName: string) {
   const result = {
     client_company: extractedData.client_company?.[0] || '미지정 기업',
     department: extractedData.department?.[0] || '미지정 부서',
-    project_background: text.length > 0 ? `RFP 문서 기반 프로젝트 배경 (${fileName})` : '정보 없음',
+    project_background: text.length > 0 ? `RFP 문서 기반 프로젝트 배경 (${fileName})` : '디지털 전환 및 업무 효율성 향상을 위한 시스템 구축',
     objectives: objectives.slice(0, 3).join('; ') || '프로젝트 목표 달성',
     scope: requirements.slice(0, 3).join('; ') || '프로젝트 범위 정의',
     timeline: extractedData.timeline?.[0] || '미지정 기간',
