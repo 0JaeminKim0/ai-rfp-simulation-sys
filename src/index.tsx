@@ -1607,6 +1607,187 @@ app.post('/api/evaluations/integrate', async (c) => {
   }
 })
 
+// 4.1 고객 페르소나 기반 종합 피드백 생성 API
+app.post('/api/generate-comprehensive-feedback', async (c) => {
+  try {
+    const { customer_id, proposal_data, presentation_data, final_score } = await c.req.json()
+    
+    console.log('[종합피드백] 고객 페르소나 기반 피드백 생성 시작:', { customer_id })
+    
+    // 고객 정보 조회 (데이터베이스 또는 글로벌 메모리)
+    let customer = null
+    
+    try {
+      if (c.env?.DB) {
+        const db = new DatabaseService(c.env.DB)
+        customer = await db.getCustomer(customer_id)
+      }
+    } catch (dbError) {
+      console.warn('[종합피드백] DB 조회 실패, 메모리 저장소 사용')
+    }
+    
+    // Railway 환경용 고객 조회
+    if (!customer) {
+      for (const [key, value] of globalMemoryStore.entries()) {
+        if (key.startsWith('customer:') && (value.id === customer_id || value.customer_id === customer_id)) {
+          customer = value
+          break
+        }
+      }
+    }
+    
+    if (!customer) {
+      console.warn('[종합피드백] 고객 정보 없음, 기본 피드백 생성')
+      return c.json({
+        success: true,
+        data: {
+          strengths: ['전반적으로 기본적인 요구사항을 충족하는 수준입니다.'],
+          improvements: ['세부적인 완성도 향상을 권장합니다.'],
+          summary: '종합적으로 기본 요건을 만족하는 제안입니다.',
+          expected_questions: [
+            '제안서의 핵심 차별화 요소는 무엇인가요?',
+            '구현 일정과 예산은 어떻게 계획되어 있나요?',
+            '유사 프로젝트 경험이 있으신가요?',
+            '사후 지원 체계는 어떻게 구성되나요?'
+          ]
+        }
+      })
+    }
+    
+    // LLM 서비스 초기화
+    const openaiService = new OpenAIService()
+    
+    // 고객 페르소나 정보 구성
+    const personaInfo = {
+      company: customer.company_name || '고객사',
+      industry: customer.industry || '일반',
+      position: customer.position || '의사결정자',
+      personality: customer.personality_traits || [],
+      priorities: customer.decision_priorities || [],
+      communication_style: customer.communication_style || '전문적',
+      expertise_level: customer.expertise_level || '보통',
+      decision_factors: customer.decision_factors || []
+    }
+    
+    // 평가 데이터 요약
+    const evaluationSummary = {
+      final_score: final_score || 80,
+      proposal_strengths: proposal_data?.key_strengths || [],
+      proposal_improvements: proposal_data?.improvement_areas || [],
+      presentation_strengths: presentation_data?.key_strengths || [],
+      presentation_improvements: presentation_data?.improvement_areas || [],
+      proposal_feedback: proposal_data?.overall_feedback || '',
+      presentation_feedback: presentation_data?.overall_feedback || ''
+    }
+    
+    // 종합 피드백 생성 프롬프트
+    const feedbackPrompt = `고객 페르소나를 기반으로 RFP 제안서와 발표에 대한 종합 피드백을 생성해주세요.
+
+## 고객 정보
+- 회사: ${personaInfo.company}
+- 업계: ${personaInfo.industry} 
+- 직급: ${personaInfo.position}
+- 성격 특성: ${personaInfo.personality.join(', ')}
+- 의사결정 우선순위: ${personaInfo.priorities.join(', ')}
+- 커뮤니케이션 스타일: ${personaInfo.communication_style}
+- 전문성 수준: ${personaInfo.expertise_level}
+- 의사결정 요인: ${personaInfo.decision_factors.join(', ')}
+
+## 평가 결과
+- 최종 점수: ${evaluationSummary.final_score}점 (100점 만점)
+- 제안서 강점: ${evaluationSummary.proposal_strengths.join(', ')}
+- 제안서 개선점: ${evaluationSummary.proposal_improvements.join(', ')}
+- 발표 강점: ${evaluationSummary.presentation_strengths.join(', ')}
+- 발표 개선점: ${evaluationSummary.presentation_improvements.join(', ')}
+
+## 요구사항
+이 고객 페르소나의 관점에서 다음을 포함한 종합 피드백을 작성해주세요:
+
+1. **강점** (3-4개): 제안서와 발표의 주요 강점을 고객 관점에서 구체적으로 설명
+2. **개선사항** (2-3개): 고객이 중요하게 생각할 개선 포인트를 실용적으로 제안
+3. **총평** (2-3문장): 고객의 의사결정 기준에 맞춰 전반적인 평가와 추천 의견
+4. **예상 질문** (4개): 이 고객이 실제로 할 것 같은 구체적이고 실무적인 질문들
+
+## 출력 형식 (JSON)
+{
+  "strengths": ["강점1", "강점2", "강점3", "강점4"],
+  "improvements": ["개선사항1", "개선사항2", "개선사항3"], 
+  "summary": "총평 내용",
+  "expected_questions": ["질문1", "질문2", "질문3", "질문4"]
+}
+
+고객의 성격과 우선순위를 반영하여 실제 비즈니스 현장에서 나올 법한 현실적이고 구체적인 피드백을 작성해주세요.`
+
+    // LLM 호출
+    const response = await openaiService.generateCompletion(feedbackPrompt, {
+      max_tokens: 1500,
+      temperature: 0.7
+    })
+    
+    let feedbackData
+    try {
+      // JSON 응답 파싱
+      const jsonMatch = response.match(/\\{[\\s\\S]*\\}/)
+      if (jsonMatch) {
+        feedbackData = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error('JSON 형식을 찾을 수 없습니다')
+      }
+    } catch (parseError) {
+      console.warn('[종합피드백] JSON 파싱 실패, 기본 데이터 사용:', parseError.message)
+      // 파싱 실패 시 기본 데이터 반환
+      feedbackData = {
+        strengths: [
+          '고객 요구사항을 정확히 파악하고 체계적으로 접근했습니다',
+          '실무진 관점에서 실현 가능한 솔루션을 제시했습니다',
+          '전문성을 바탕으로 신뢰할 수 있는 제안을 구성했습니다'
+        ],
+        improvements: [
+          '차별화 요소를 더욱 명확히 부각시킬 필요가 있습니다',
+          '비용 대비 효과에 대한 구체적인 분석이 보강되면 좋겠습니다'
+        ],
+        summary: '전반적으로 고객의 니즈를 잘 이해하고 적절한 솔루션을 제안한 우수한 제안서입니다.',
+        expected_questions: [
+          '제안하신 솔루션의 핵심 차별화 요소는 무엇인가요?',
+          '프로젝트 구현 일정과 단계별 마일스톤은 어떻게 계획되어 있나요?',
+          '유사 프로젝트 수행 경험과 성공 사례가 있으신가요?',
+          '사후 지원 및 유지보수 체계는 어떻게 구성되어 있나요?'
+        ]
+      }
+    }
+    
+    console.log('[종합피드백] LLM 기반 피드백 생성 완료:', {
+      customer: personaInfo.company,
+      strengths: feedbackData.strengths?.length || 0,
+      improvements: feedbackData.improvements?.length || 0,
+      questions: feedbackData.expected_questions?.length || 0
+    })
+    
+    return c.json({
+      success: true,
+      data: feedbackData
+    })
+    
+  } catch (error) {
+    console.error('[종합피드백] 생성 오류:', error)
+    return c.json({
+      success: false,
+      error: error.message || '종합 피드백 생성 중 오류가 발생했습니다.',
+      data: {
+        strengths: ['전반적으로 기본적인 요구사항을 충족하는 수준입니다.'],
+        improvements: ['세부적인 완성도 향상을 권장합니다.'],
+        summary: '종합적으로 기본 요건을 만족하는 제안입니다.',
+        expected_questions: [
+          '제안서의 핵심 차별화 요소는 무엇인가요?',
+          '구현 일정과 예산은 어떻게 계획되어 있나요?',
+          '유사 프로젝트 경험이 있으신가요?',
+          '사후 지원 체계는 어떻게 구성되나요?'
+        ]
+      }
+    })
+  }
+})
+
 // 5. 세션 관리 API
 app.get('/api/sessions', async (c) => {
   try {
@@ -4082,6 +4263,16 @@ app.get('/results', (c) => {
                                 평가 데이터를 로드하는 중입니다...
                             </p>
                         </div>
+                        
+                        <!-- 예상 질문 -->
+                        <div style="background: linear-gradient(135deg, var(--pwc-purple-light), var(--pwc-white)); border-radius: var(--radius-md); padding: var(--spacing-lg); border-left: 6px solid var(--pwc-purple); margin-top: var(--spacing-lg);">
+                            <h3 style="font-weight: 600; color: var(--pwc-navy); margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-sm); font-size: 1.125rem;">
+                                <i class="fas fa-question-circle"></i>예상 질문
+                            </h3>
+                            <div style="color: var(--pwc-purple); line-height: 1.6; word-break: keep-all;" id="feedback-questions">
+                                고객 페르소나 기반 질문을 생성하는 중입니다...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4347,22 +4538,23 @@ app.get('/results', (c) => {
                     updateRadarChart(proposalScores, presentationScores);
                 }
                 
-                // Update dynamic feedback with available data (actual or demo)
+                // Update dynamic feedback with available data (actual or LLM-generated)
                 const displayProposalData = proposalData || { 
-                    key_strengths: ["체계적인 문제 분석 (데모)", "실현 가능한 솔루션 제안 (데모)"],
-                    improvement_areas: ["창의적 차별화 요소 강화 (데모)"],
-                    overall_feedback: "전문적이고 체계적인 제안서입니다. (데모 데이터)",
+                    key_strengths: [],
+                    improvement_areas: [],
+                    overall_feedback: "",
                     scores: proposalScores
                 };
                 
                 const displayPresentationData = presentationData || {
-                    key_strengths: ["명확한 전달력 (데모)", "전문성 있는 설명 (데모)"],
-                    improvement_areas: ["시각적 자료 활용도 개선 (데모)"],
-                    overall_feedback: "안정적이고 설득력 있는 발표였습니다. (데모 데이터)",
+                    key_strengths: [],
+                    improvement_areas: [],
+                    overall_feedback: "",
                     scores: presentationScores
                 };
                 
-                updateDynamicFeedback(displayProposalData, displayPresentationData, finalScore);
+                // LLM 기반 종합 피드백 생성 및 적용
+                generateComprehensiveFeedback(customerId, displayProposalData, displayPresentationData, finalScore);
             }
             
             function updateDetailedScores(type, scores) {
@@ -4666,6 +4858,75 @@ app.get('/results', (c) => {
                     strengths: actualStrengths.length,
                     improvements: actualImprovements.length,
                     hasSummary: !!actualSummary
+                });
+            }
+            
+            // LLM 기반 종합 피드백 생성 함수
+            async function generateComprehensiveFeedback(customerId, proposalData, presentationData, finalScore) {
+                try {
+                    console.log('[종합피드백] LLM 기반 피드백 생성 시작');
+                    
+                    const response = await fetch('/api/generate-comprehensive-feedback', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            customer_id: customerId,
+                            proposal_data: proposalData,
+                            presentation_data: presentationData,
+                            final_score: finalScore
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        console.log('[종합피드백] LLM 피드백 생성 성공');
+                        updateFeedbackUI(result.data);
+                    } else {
+                        console.warn('[종합피드백] LLM 피드백 생성 실패, 기존 로직 사용');
+                        updateDynamicFeedback(proposalData, presentationData, finalScore);
+                    }
+                } catch (error) {
+                    console.error('[종합피드백] LLM 피드백 생성 오류:', error);
+                    // 오류 발생 시 기존 로직 사용
+                    updateDynamicFeedback(proposalData, presentationData, finalScore);
+                }
+            }
+            
+            // LLM 생성 피드백 UI 업데이트 함수
+            function updateFeedbackUI(feedbackData) {
+                const strengthsElement = document.getElementById('feedback-strengths');
+                const improvementsElement = document.getElementById('feedback-improvements');  
+                const summaryElement = document.getElementById('feedback-summary');
+                const questionsElement = document.getElementById('feedback-questions');
+                
+                if (strengthsElement && feedbackData.strengths) {
+                    strengthsElement.textContent = feedbackData.strengths.join(', ');
+                }
+                
+                if (improvementsElement && feedbackData.improvements) {
+                    improvementsElement.textContent = feedbackData.improvements.join(', ');
+                }
+                
+                if (summaryElement && feedbackData.summary) {
+                    summaryElement.textContent = feedbackData.summary;
+                }
+                
+                // 예상 질문 업데이트 (새로운 요소가 있는 경우)
+                if (questionsElement && feedbackData.expected_questions) {
+                    let questionsHTML = '';
+                    feedbackData.expected_questions.forEach((q, index) => {
+                        questionsHTML += '<li style="margin-bottom: var(--spacing-sm); color: var(--text-color);"><strong>Q' + (index + 1) + ':</strong> ' + q + '</li>';
+                    });
+                    questionsElement.innerHTML = '<ol style="padding-left: var(--spacing-md); list-style: none;">' + questionsHTML + '</ol>';
+                }
+                
+                console.log('[종합피드백] UI 업데이트 완료:', {
+                    strengths: feedbackData.strengths?.length || 0,
+                    improvements: feedbackData.improvements?.length || 0,
+                    questions: feedbackData.expected_questions?.length || 0
                 });
             }
             
