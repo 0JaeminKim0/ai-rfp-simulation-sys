@@ -984,14 +984,14 @@ app.post('/api/evaluations/proposal', async (c) => {
           'JSON 응답 (1-5점, 가중치 적용 총점):\n' +
           JSON.stringify({
             scores: {
-              clarity: { score: 4, comment: "30개 속성 중 평가 관점과 우선순위를 반영한 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
-              expertise: { score: 4, comment: "전문성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
-              persuasiveness: { score: 4, comment: "설득력 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
-              logic: { score: 4, comment: "논리성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
-              creativity: { score: 4, comment: "창의성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
-              credibility: { score: 4, comment: "신뢰성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" }
+              clarity: { score: 85, comment: "30개 속성 중 평가 관점과 우선순위를 반영한 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              expertise: { score: 88, comment: "전문성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              persuasiveness: { score: 82, comment: "설득력 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              logic: { score: 87, comment: "논리성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              creativity: { score: 78, comment: "창의성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" },
+              credibility: { score: 90, comment: "신뢰성 평가 상세 코멘트", persona_factor: "적용된 페르소나 속성" }
             },
-            weighted_total_score: 82,
+            total_score: 85,
             overall_feedback: "30개 속성 페르소나 관점에서의 종합 평가 (2-3문장)",
             key_strengths: ["구체적 강점1", "구체적 강점2", "구체적 강점3"],
             improvement_areas: ["구체적 개선점1", "구체적 개선점2", "구체적 개선점3"],
@@ -1227,51 +1227,34 @@ app.post('/api/demo/presentation-evaluation', async (c) => {
     // 6지표 평가 점수 (샘플)
     const evaluationScores = {
       clarity: {
-        score: 4,
+        score: 82,
         comment: "발표 내용이 명확하고 체계적으로 구성되어 있으나, 기술적 세부사항에 대한 설명이 더 구체적이면 좋겠습니다."
       },
       expertise: {
-        score: 5, 
+        score: 94, 
         comment: "화학산업과 ESG 분야의 전문성이 뛰어나게 드러나며, 실제 프로젝트 경험을 바탕으로 한 신뢰할 수 있는 접근법을 제시했습니다."
       },
       persuasiveness: {
-        score: 4,
+        score: 78,
         comment: "고객의 니즈를 정확히 파악하고 해결방안을 논리적으로 제시했으나, 감정적 어필과 스토리텔링 요소가 보강되면 더욱 설득력이 높아질 것입니다."
       },
       logic: {
-        score: 4,
+        score: 85,
         comment: "논리적 흐름이 체계적이고 근거가 타당하나, 각 단계별 연결고리를 더욱 명확히 제시하면 좋겠습니다."
       },
       creativity: {
-        score: 3,
+        score: 65,
         comment: "안정적이고 검증된 접근법이지만, 혁신적이고 차별화된 아이디어가 더 필요합니다. 창의적인 솔루션 요소를 추가하면 경쟁력이 높아질 것입니다."
       },
       credibility: {
-        score: 5,
+        score: 91,
         comment: "PwC의 브랜드 신뢰도와 화학산업 프로젝트 경험, 단계적 실행 방안이 매우 신뢰할 만합니다."
       }
     }
     
-    // 점수 변환 함수: 1-5점을 10/20/30/40/50점으로 변환
-    function convertTo100Scale(score: number): number {
-      const mapping: Record<number, number> = { 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 }
-      return mapping[score] || 0
-    }
-    
-    // 100점 만점 점수로 변환
-    const convertedScores = {}
-    Object.keys(evaluationScores).forEach(key => {
-      convertedScores[key] = {
-        ...evaluationScores[key],
-        score_100: convertTo100Scale(evaluationScores[key].score),
-        score_5: evaluationScores[key].score  // 원본 5점 점수도 유지
-      }
-    })
-    
-    // 총점 계산 (100점 만점)
+    // 총점 계산 (100점 만점 직접 평균)
     const scores = Object.values(evaluationScores)
-    const totalScore5 = scores.reduce((sum, item) => sum + item.score, 0) / scores.length  // 5점 만점
-    const totalScore100 = convertTo100Scale(Math.round(totalScore5))  // 100점 만점으로 변환
+    const totalScore100 = Math.round(scores.reduce((sum, item) => sum + item.score, 0) / scores.length)
     
     // 발표 평가 결과 구성
     const presentationEvaluation = {
@@ -1279,10 +1262,8 @@ app.post('/api/demo/presentation-evaluation', async (c) => {
       presentation_title: '금호석유화학 DX 플랫폼 구축 제안',
       stt_transcript: sampleSTT,
       speech_metrics: speechMetrics,
-      scores: convertedScores,  // 변환된 점수 사용 (100점 만점 + 5점 원본)
-      total_score_5: totalScore5,      // 5점 만점 총점
-      total_score_100: totalScore100,  // 100점 만점 총점
-      total_score: totalScore100,      // 기본 총점은 100점 만점
+      scores: evaluationScores,        // 100점 만점 직접 평가
+      total_score: totalScore100,      // 100점 만점 총점
       overall_feedback: `화학산업 전문성과 ESG 대응 역량이 우수하며, 체계적이고 실현가능한 실행 계획을 제시했습니다. 
         발표 스킬 면에서는 명확한 전달력을 보였으나, 더욱 창의적이고 혁신적인 차별화 요소를 강화하면 경쟁력이 높아질 것입니다. 
         전반적으로 신뢰할 수 있는 우수한 발표였습니다.`,
@@ -3758,13 +3739,13 @@ app.get('/results', (c) => {
                                     <div style="background: linear-gradient(135deg, var(--pwc-blue), var(--pwc-light-blue)); color: var(--pwc-white); border-radius: var(--radius-md); padding: var(--spacing-md); text-align: center; position: relative; overflow: hidden;">
                                         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
                                         <div style="font-weight: 600; margin-bottom: var(--spacing-xs); opacity: 0.9;">제안서 평균</div>
-                                        <div style="font-size: 1.5rem; font-weight: 700;">40점</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;">82점</div>
                                         <i class="fas fa-file-alt" style="position: absolute; bottom: 8px; right: 10px; opacity: 0.6; font-size: 1.2rem;"></i>
                                     </div>
                                     <div style="background: linear-gradient(135deg, var(--pwc-purple), var(--pwc-purple-light)); color: var(--pwc-white); border-radius: var(--radius-md); padding: var(--spacing-md); text-align: center; position: relative; overflow: hidden;">
                                         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
                                         <div style="font-weight: 600; margin-bottom: var(--spacing-xs); opacity: 0.9;">발표 평균</div>
-                                        <div style="font-size: 1.5rem; font-weight: 700;">40점</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700;">82점</div>
                                         <i class="fas fa-presentation" style="position: absolute; bottom: 8px; right: 10px; opacity: 0.6; font-size: 1.2rem;"></i>
                                     </div>
                                 </div>

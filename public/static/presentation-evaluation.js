@@ -628,16 +628,16 @@ class PresentationEvaluationApp {
   }
 
   displayEvaluationResults(evaluationData) {
-    // 점수 표시 (100점 만점)
-    document.getElementById('clarity-score').textContent = evaluationData.scores.clarity.score_100 + '점'
-    document.getElementById('expertise-score').textContent = evaluationData.scores.expertise.score_100 + '점'
-    document.getElementById('persuasiveness-score').textContent = evaluationData.scores.persuasiveness.score_100 + '점'
-    document.getElementById('logic-score').textContent = evaluationData.scores.logic.score_100 + '점'
-    document.getElementById('creativity-score').textContent = evaluationData.scores.creativity.score_100 + '점'
-    document.getElementById('credibility-score').textContent = evaluationData.scores.credibility.score_100 + '점'
+    // 점수 표시 (100점 만점 직접 평가)
+    document.getElementById('clarity-score').textContent = evaluationData.scores.clarity.score + '점'
+    document.getElementById('expertise-score').textContent = evaluationData.scores.expertise.score + '점'
+    document.getElementById('persuasiveness-score').textContent = evaluationData.scores.persuasiveness.score + '점'
+    document.getElementById('logic-score').textContent = evaluationData.scores.logic.score + '점'
+    document.getElementById('creativity-score').textContent = evaluationData.scores.creativity.score + '점'
+    document.getElementById('credibility-score').textContent = evaluationData.scores.credibility.score + '점'
     
     // 총점 표시 (100점 만점)
-    document.getElementById('total-score').textContent = Math.round(evaluationData.total_score_100 || evaluationData.total_score) + '점'
+    document.getElementById('total-score').textContent = Math.round(evaluationData.total_score) + '점'
     
     // 결과 섹션 표시
     document.getElementById('evaluation-results').classList.remove('hidden')
