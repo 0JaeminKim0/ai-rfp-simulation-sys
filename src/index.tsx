@@ -2693,7 +2693,7 @@ app.get('/api/report/demo', async (c) => {
     const pdfGenerator = new PDFGeneratorService()
     
     // 데모 데이터 사용 - 실제 회사명으로 변경
-    const demoCompanyName = '금고석유화학'  // 실제 데모에서 사용하는 회사명
+    const demoCompanyName = 'KHNP'  // 실제 데모에서 사용하는 회사명
     const demoCustomer = DemoDataService.getSampleAIVirtualCustomer(demoCompanyName)
     const demoProposalEval = DemoDataService.getSampleProposalEvaluation(demoCompanyName)
     const demoPresentationEval = DemoDataService.getSamplePresentationEvaluation(demoCompanyName)
