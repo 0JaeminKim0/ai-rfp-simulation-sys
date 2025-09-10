@@ -1760,23 +1760,21 @@ app.post('/api/generate-comprehensive-feedback', async (c) => {
 
 고객의 성격과 우선순위를 반영하여 실제 비즈니스 현장에서 나올 법한 현실적이고 구체적인 피드백을 작성해주세요.`
 
-    // LLM 호출
+    // LLM 호출 (JSON 모드 활성화)
     const response = await openaiService.generateCompletion(feedbackPrompt, {
       max_tokens: 1500,
-      temperature: 0.7
+      temperature: 0.7,
+      json_mode: true
     })
     
     let feedbackData
     try {
-      // JSON 응답 파싱
-      const jsonMatch = response.match(/\\{[\\s\\S]*\\}/)
-      if (jsonMatch) {
-        feedbackData = JSON.parse(jsonMatch[0])
-      } else {
-        throw new Error('JSON 형식을 찾을 수 없습니다')
-      }
+      // JSON 응답 직접 파싱 (이미 JSON 형식이어야 함)
+      feedbackData = JSON.parse(response)
+      console.log('[종합피드백] JSON 파싱 성공:', feedbackData)
     } catch (parseError) {
       console.warn('[종합피드백] JSON 파싱 실패, 기본 데이터 사용:', parseError.message)
+      console.log('[종합피드백] 원본 응답:', response)
       // 파싱 실패 시 기본 데이터 반환
       feedbackData = {
         strengths: [

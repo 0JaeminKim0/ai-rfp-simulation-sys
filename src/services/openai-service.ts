@@ -642,18 +642,26 @@ ${customer.customer_type} 관점에서 고객사의 우선순위와 우려사항
       max_tokens?: number
       temperature?: number
       model?: string
+      json_mode?: boolean
     }
   ): Promise<string> {
-    const { max_tokens = 1500, temperature = 0.7, model = 'gpt-4o' } = options || {}
+    const { max_tokens = 1500, temperature = 0.7, model = 'gpt-4o', json_mode = false } = options || {}
     
     try {
       return await this.safeAPICall(async () => {
-        const response = await this.openai.chat.completions.create({
+        const requestOptions: any = {
           model,
           messages: [{ role: "user", content: prompt }],
           temperature,
           max_tokens: this.isUnbound ? max_tokens * 1.5 : max_tokens,
-        })
+        }
+
+        // JSON 모드 활성화
+        if (json_mode) {
+          requestOptions.response_format = { type: "json_object" }
+        }
+
+        const response = await this.openai.chat.completions.create(requestOptions)
 
         const content = response.choices[0].message.content
         if (!content) throw new Error('OpenAI 응답이 비어있습니다')

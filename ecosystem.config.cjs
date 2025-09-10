@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'rfp-simulator',
-      script: 'node',
-      args: '--import tsx/esm src/index.tsx',
+      script: 'npx',
+      args: 'tsx src/index.tsx',
       env: {
         NODE_ENV: 'development',
         PORT: 3000
