@@ -451,20 +451,29 @@ app.post('/api/customers/rfp-analysis', async (c) => {
     let extractedText = ''
     
     try {
+      console.log(`📂 파일 타입별 텍스트 추출 시작: ${fileValidation.fileType}`)
+      
       if (fileValidation.fileType === 'pdf') {
+        console.log(`📄 PDF 파싱 시작: ${fileName}`)
         const pdfResult = await pdfParser.extractTextFromPdf(fileBuffer, fileName)
         extractedText = pdfResult.text
-        console.log(`✅ PDF 텍스트 추출 완료: ${extractedText.length}자`)
+        console.log(`✅ PDF 텍스트 추출 완료: ${extractedText.length}자 (방식: ${pdfResult.extraction_method})`)
+        console.log(`📝 PDF 텍스트 미리보기: "${extractedText.substring(0, 200)}..."`)
       } else if (fileValidation.fileType === 'docx') {
+        console.log(`📝 DOCX 파싱 시작: ${fileName}`)
         const docxResult = await pdfParser.extractTextFromDocx(fileBuffer, fileName)
         extractedText = docxResult.text
-        console.log(`✅ DOCX 텍스트 추출 완료: ${extractedText.length}자`)
+        console.log(`✅ DOCX 텍스트 추출 완료: ${extractedText.length}자 (방식: ${docxResult.extraction_method})`)
+        console.log(`📝 DOCX 텍스트 미리보기: "${extractedText.substring(0, 200)}..."`)
       } else if (fileValidation.fileType === 'txt') {
+        console.log(`📋 TXT 파일 읽기 시작: ${fileName}`)
         extractedText = new TextDecoder('utf-8').decode(fileBuffer)
         console.log(`✅ TXT 텍스트 추출 완료: ${extractedText.length}자`)
+        console.log(`📝 TXT 텍스트 미리보기: "${extractedText.substring(0, 200)}..."`)
       }
     } catch (extractError) {
-      console.error('❌ 텍스트 추출 오류:', extractError)
+      console.error('❌ 텍스트 추출 오류:', extractError.message)
+      console.error('📋 에러 스택:', extractError.stack)
       throw new Error(`문서에서 텍스트를 추출할 수 없습니다: ${extractError.message}`)
     }
     
@@ -501,6 +510,9 @@ app.post('/api/customers/rfp-analysis', async (c) => {
     const isUnbound = isWorkersUnbound()
     
     console.log(`🚀 RFP 분석 모드: ${env.OPENAI_API_KEY ? 'LLM 시도' : 'API 키 없음 - NLP 폴백만'} (텍스트: ${extractedText.length}자)`)
+    console.log(`🔑 API 키 체크: exists=${!!env.OPENAI_API_KEY}, length=${env.OPENAI_API_KEY ? env.OPENAI_API_KEY.length : 0}`)
+    console.log(`📝 추출된 텍스트 미리보기: "${extractedText.substring(0, 100)}..."`)
+    console.log(`✅ LLM 조건 체크: API키(${!!env.OPENAI_API_KEY}) && 텍스트길이>50(${extractedText.length > 50}) = ${env.OPENAI_API_KEY && extractedText.length > 50}`)
     
     if (env.OPENAI_API_KEY && extractedText.length > 50) {
       // 🔥 NEW: 분할 처리 RFP 분석 - 3단계 순차 처리로 30초 이내 보장
