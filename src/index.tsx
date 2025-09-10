@@ -4163,7 +4163,7 @@ app.get('/results', (c) => {
                     // Load proposal evaluation data
                     if (proposalEvaluationId) {
                         console.log('[통합결과] Loading proposal evaluation...');
-                        const proposalResponse = await fetch(`/api/evaluations/proposal/${proposalEvaluationId}`);
+                        const proposalResponse = await fetch('/api/evaluations/proposal/' + proposalEvaluationId);
                         if (proposalResponse.ok) {
                             const result = await proposalResponse.json();
                             proposalData = result.data;
@@ -4174,7 +4174,7 @@ app.get('/results', (c) => {
                     // Load presentation evaluation data
                     if (presentationEvaluationId) {
                         console.log('[통합결과] Loading presentation evaluation...');
-                        const presentationResponse = await fetch(`/api/evaluations/presentation/${presentationEvaluationId}`);
+                        const presentationResponse = await fetch('/api/evaluations/presentation/' + presentationEvaluationId);
                         if (presentationResponse.ok) {
                             const result = await presentationResponse.json();
                             presentationData = result.data;
